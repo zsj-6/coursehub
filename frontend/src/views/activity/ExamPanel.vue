@@ -21,6 +21,11 @@ const ended = computed(() => !!a.value.due_at && dayjs().isAfter(a.value.due_at)
 const attemptsLeft = computed(() =>
   s.value.attempts ? Math.max(s.value.attempts - (mine.value?.attempts_used ?? 0), 0) : Infinity,
 )
+const PUBLISH_LABEL: Record<string, string> = { none: '不公布', immediate: '交卷后立即公布', scheduled: '定时公布' }
+const publishText = computed(() => {
+  if (s.value.score_publish === 'scheduled') return `成绩将于 ${fmt(s.value.score_publish_at)} 公布`
+  return '老师暂未公布成绩'
+})
 const canStart = computed(() => !notStarted.value && !ended.value && (mine.value?.draft_id || attemptsLeft.value > 0))
 
 async function start() {
@@ -75,6 +80,10 @@ onMounted(async () => {
     <div><span class="muted">限时</span>{{ s.duration_min ? `${s.duration_min} 分钟` : '不限时' }}</div>
     <div><span class="muted">作答次数</span>{{ s.attempts ? `${s.attempts} 次（取最高分）` : '不限' }}</div>
     <div><span class="muted">题目 / 满分</span>{{ a.question_count ?? 0 }} 题 / {{ a.full_score }} 分</div>
+    <div>
+      <span class="muted">公布成绩</span>{{ PUBLISH_LABEL[s.score_publish || 'immediate'] }}
+      <template v-if="s.score_publish === 'scheduled'">（{{ fmt(s.score_publish_at) }}）</template>
+    </div>
   </section>
 
   <!-- 学生端 -->
@@ -83,6 +92,7 @@ onMounted(async () => {
       <div class="flex">
         <b>我的成绩</b>
         <span v-if="mine.score !== null" class="score">{{ fmtScore(mine.score) }} / {{ a.full_score }}</span>
+        <el-tag v-else-if="mine.attempts_used && !mine.score_published" type="info">{{ publishText }}</el-tag>
         <el-tag v-else-if="mine.status === 'pending'" type="warning" size="small">主观题待批改</el-tag>
         <span v-else class="muted">尚未作答</span>
         <span class="spacer" />
@@ -97,7 +107,10 @@ onMounted(async () => {
         <el-table-column label="次数" width="80"><template #default="{ row }">第 {{ row.attempt_no }} 次</template></el-table-column>
         <el-table-column label="交卷时间"><template #default="{ row }">{{ fmt(row.submitted_at) }}</template></el-table-column>
         <el-table-column label="得分" width="120">
-          <template #default="{ row }">{{ row.status === 'graded' ? fmtScore(row.score) : `客观题 ${fmtScore(row.auto_score)}` }}</template>
+          <template #default="{ row }">
+            <span v-if="!mine.score_published" class="muted">未公布</span>
+            <template v-else>{{ row.status === 'graded' ? fmtScore(row.score) : `客观题 ${fmtScore(row.auto_score)}` }}</template>
+          </template>
         </el-table-column>
         <el-table-column label="" width="100">
           <template #default="{ row }">

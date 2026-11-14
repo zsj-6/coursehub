@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Activity, Chapter, Course, CourseMember, GradeOverride, Submission, User
+from app.services.visibility import score_published
 
 GRADED_TYPES = ("homework", "exam")
 
@@ -31,6 +32,14 @@ def activity_score(act: Activity, subs: list[Submission]) -> float | None:
     if rule == "avg":
         return round(mean(scores), 2)
     return scores[-1]
+
+
+def ratio_total(db: Session, course_id: int, exclude_id: int | None = None) -> float:
+    """课程内作业、测试的成绩占比合计（可排除某个活动，用于编辑时计算剩余）。"""
+    acts = db.scalars(
+        select(Activity).where(Activity.course_id == course_id, Activity.type.in_(GRADED_TYPES))
+    ).all()
+    return round(sum(a.score_ratio for a in acts if a.id != exclude_id), 2)
 
 
 def course_total(acts: list[Activity], scores: dict[int, float | None]) -> float:
@@ -73,8 +82,10 @@ def graded_activities(db: Session, course_id: int) -> list[Activity]:
 def grade_table(db: Session, course: Course, only_user_id: int | None = None) -> dict:
     """only_user_id 给学生用：只返回本人一行，并且隐藏未发布的活动。"""
     acts = graded_activities(db, course.id)
+    hidden: set[int] = set()
     if only_user_id is not None:
         acts = [a for a in acts if a.is_published]
+        hidden = {a.id for a in acts if not score_published(a)}
     act_ids = [a.id for a in acts]
 
     q = (
@@ -110,6 +121,10 @@ def grade_table(db: Session, course: Course, only_user_id: int | None = None) ->
         finals: dict[int, float | None] = {}
         for a in acts:
             subs = subs_by.get((stu.id, a.id), [])
+            if a.id in hidden:  # 成绩未公布：不给学生看，也不计入学生看到的总评
+                finals[a.id] = None
+                cells[str(a.id)] = {"raw": None, "override": None, "final": None, "status": submission_status(subs), "hidden": True}
+                continue
             raw = activity_score(a, subs)
             ov = overrides.get((stu.id, a.id))
             final = ov if ov is not None else raw
@@ -121,7 +136,7 @@ def grade_table(db: Session, course: Course, only_user_id: int | None = None) ->
                 "status": submission_status(subs),
             }
         calc = course_total(acts, finals)
-        total_ov = overrides.get((stu.id, None))
+        total_ov = overrides.get((stu.id, None)) if not hidden else None
         rows.append(
             {
                 "user": {"id": stu.id, "name": stu.name, "username": stu.username, "student_no": stu.student_no},

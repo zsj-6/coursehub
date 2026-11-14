@@ -33,6 +33,7 @@ class Course(Base):
     semester: Mapped[str] = mapped_column(String(32), default="")
     owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    completion: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)  # 完成指标，见 schemas.CompletionSettings
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     owner: Mapped[User | None] = relationship()
@@ -168,6 +169,7 @@ class Progress(Base):
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
     watched_seconds: Mapped[int] = mapped_column(Integer, default=0)
     last_pos: Mapped[float] = mapped_column(Float, default=0)
+    duration: Mapped[float] = mapped_column(Float, default=0)  # 前端上报的视频总时长
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
 
 

@@ -15,9 +15,20 @@ from app.serializers import question_for_student, question_full, submission_out,
 from app.services import exam as exam_svc
 from app.services import scoring
 from app.services.export import homework_zip
-from app.services.visibility import exam_deadline, exam_expired, homework_submit_error
+from app.services.visibility import exam_deadline, exam_expired, homework_submit_error, score_published
 
 router = APIRouter(tags=["作业与测试"])
+
+
+def _hide_scores(data: dict) -> dict:
+    """成绩未公布时，学生看到的提交里去掉所有分数。"""
+    data.update(score=None, auto_score=None, question_scores={}, comment="")
+    return data
+
+
+def _publish_info(act: Activity) -> dict:
+    s = act.settings or {}
+    return {"score_published": score_published(act), "score_publish": s.get("score_publish", "immediate"), "score_publish_at": s.get("score_publish_at")}
 
 
 def _require_type(act: Activity, *types: str) -> None:
@@ -142,12 +153,17 @@ def my_submissions(activity_id: int, user: User = Depends(get_current_user), db:
     ).all()
     real = [s for s in subs if s.status != "draft"]
     draft = next((s for s in subs if s.status == "draft"), None)
+    info = _publish_info(act)
+    items = [submission_out(db, s, include_user=False) for s in real]
+    if not info["score_published"]:
+        items = [_hide_scores(x) for x in items]
     return {
-        "submissions": [submission_out(db, s, include_user=False) for s in real],
+        "submissions": items,
         "draft_id": draft.id if draft else None,
         "status": scoring.submission_status(real),
-        "score": scoring.activity_score(act, real),
+        "score": scoring.activity_score(act, real) if info["score_published"] else None,
         "attempts_used": len(real),
+        **info,
     }
 
 
@@ -209,7 +225,8 @@ def submit_exam(
         sub.answers = body.answers  # 超时后提交的答案不采用，按最后一次自动保存的答案交卷
     exam_svc.finalize(db, act, sub)
     db.commit()
-    return submission_out(db, sub, include_user=False)
+    data = submission_out(db, sub, include_user=False)
+    return data if score_published(act) else _hide_scores(data)
 
 
 # ======================= 查看单份提交 =======================
@@ -224,9 +241,14 @@ def get_submission(submission_id: int, user: User = Depends(get_current_user), d
     if role == "student" and sub.user_id != user.id:
         raise HTTPException(404, "提交不存在")
     data = submission_out(db, sub)
+    hide = role == "student" and not score_published(act)
+    if hide:
+        _hide_scores(data)
+    data.update(_publish_info(act))
     if act.type == "exam":
+        # 学生要等成绩公布后、且老师允许时才能看到答案和解析
         show_answer = role != "student" or (
-            sub.status != "draft" and (act.settings or {}).get("show_answer", True)
+            sub.status != "draft" and not hide and (act.settings or {}).get("show_answer", True)
         )
         questions = []
         for q in act.questions:
@@ -237,7 +259,7 @@ def get_submission(submission_id: int, user: User = Depends(get_current_user), d
             if q.type == "fill":
                 item["blank_count"] = len(q.answer) if isinstance(q.answer, list) else 1
             item["given"] = (sub.answers or {}).get(str(q.id))
-            item["got"] = (sub.question_scores or {}).get(str(q.id))
+            item["got"] = None if hide else (sub.question_scores or {}).get(str(q.id))
             questions.append(item)
         data["questions"] = questions
         data["show_answer"] = show_answer

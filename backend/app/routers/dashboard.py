@@ -12,7 +12,7 @@ from app.deps import get_current_user
 from app.models import Activity, Course, CourseMember, RecentVisit, Submission, User
 from app.serializers import course_out
 from app.services.scoring import submission_status
-from app.services.visibility import is_visible
+from app.services.visibility import is_visible, score_published
 
 router = APIRouter(tags=["首页"])
 
@@ -77,7 +77,7 @@ def dashboard(user: User = Depends(get_current_user), db: Session = Depends(get_
                 subs = mine.get(a.id, [])
                 if not subs and a.due_at and a.due_at >= now:
                     todos.append({"kind": "todo", "time": a.due_at, **_act_ref(a, c)})
-                for s in subs:
+                for s in subs if score_published(a, now) else []:
                     if s.status == "graded" and s.graded_at and s.graded_at >= since:
                         feed.append({"kind": "graded", "time": s.graded_at, "score": s.score, **_act_ref(a, c)})
 

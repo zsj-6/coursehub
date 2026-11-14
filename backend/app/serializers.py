@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Activity, Course, FileObj, Question, Submission, User
+from app.schemas import CompletionSettings
 
 
 def user_out(u: User | None) -> dict | None:
@@ -56,6 +57,7 @@ def course_out(c: Course, my_role: str | None = None, student_count: int | None 
         "created_at": c.created_at,
         "my_role": my_role,
         "student_count": student_count,
+        "completion": CompletionSettings(**(c.completion or {})).model_dump(),
     }
 
 

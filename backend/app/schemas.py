@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
 from app.db import to_utc
 
@@ -66,12 +66,22 @@ class CourseIn(BaseModel):
     cover: str | None = None
 
 
+class CompletionSettings(BaseModel):
+    """完成指标：达到即视为完成该学习活动。"""
+
+    video_percent: int = Field(80, ge=0, le=100)  # 音视频需累积观看的百分比；0 表示打开即完成
+    homework: Literal["submit", "pass"] = "submit"  # 提交作业 / 成绩达标
+    exam: Literal["submit", "pass"] = "submit"  # 提交测试 / 成绩达标
+    pass_percent: int = Field(60, ge=0, le=100)  # 达标线：得分达到满分的百分比
+
+
 class CourseUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=128)
     description: str | None = None
     semester: str | None = None
     cover: str | None = None
     archived: bool | None = None
+    completion: CompletionSettings | None = None
 
 
 class JoinIn(BaseModel):
@@ -168,7 +178,15 @@ class ExamSettings(BaseModel):
     duration_min: int = Field(0, ge=0)  # 0 表示不限时
     attempts: int = Field(1, ge=0)  # 0 表示不限
     shuffle_options: bool = False
-    show_answer: bool = True  # 交卷后是否给学生看答案和解析
+    show_answer: bool = True  # 成绩公布后是否给学生看答案和解析
+    score_publish: Literal["none", "immediate", "scheduled"] = "immediate"  # 不公布 / 交卷后立即公布 / 定时公布
+    score_publish_at: DT | None = None
+
+    @model_validator(mode="after")
+    def _check_publish(self):
+        if self.score_publish == "scheduled" and not self.score_publish_at:
+            raise ValueError("定时公布成绩需要设置公布时间")
+        return self
 
 
 SETTINGS_MODELS: dict[str, type[BaseModel]] = {
@@ -212,6 +230,10 @@ class GradeIn(BaseModel):
     score: float | None = Field(None, ge=0)
     comment: str | None = None
     question_scores: dict[str, float] | None = None  # 测试主观题逐题给分
+
+
+class ScoreRatiosIn(BaseModel):
+    ratios: dict[int, float]  # {活动id: 成绩占比}
 
 
 class OverrideIn(BaseModel):

@@ -55,7 +55,10 @@ const link = (a: ActivityBrief) => `/courses/${a.course_id}/activities/${a.id}`
             </template>
           </el-table-column>
           <el-table-column label="得分" width="100">
-            <template #default="{ row }">{{ fmtScore(row.my_score) }} / {{ row.full_score }}</template>
+            <template #default="{ row }">
+              <span v-if="row.score_published === false && row.my_status !== 'not_submitted'" class="muted">未公布</span>
+              <template v-else>{{ fmtScore(row.my_score) }} / {{ row.full_score }}</template>
+            </template>
           </el-table-column>
         </template>
         <template v-else>

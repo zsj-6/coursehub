@@ -37,10 +37,10 @@
 | 参考资料 | 上传文件（ppt、pdf、doc、xls、图片等）；PDF 和图片能在线预览，其他格式只能下载；可以设置是否允许学生下载 |
 | 音视频 | 上传视频或填外部链接，用 `<video>` 播放；每 10 秒上报一次观看进度，看到 90% 算完成 |
 | 作业 | 设置截止时间、满分、成绩占比、计分规则（取最后一次、最高分或平均分）、最多提交次数。学生用文本加附件提交，可以多次提交，每次留一个版本。批改页分三栏：左边按批改状态和提交状态筛选学生，可以切换上一个/下一个；中间看提交内容和历史版本；右边打分、写评语。作业列表上也可以直接填最终成绩。支持打包下载：一个 zip，里面有一张汇总 Excel，加上每个学生一个文件夹（以"学号_姓名"命名） |
-| 测试 | 设置开始和结束时间、作答时长、作答次数、满分、成绩占比、是否打乱选项顺序。题目编辑器支持单选、多选、判断、填空、简答 5 种题型，可以批量删除题目。学生到开始时间才能作答，有倒计时，时间到自动交卷。客观题自动判分，简答题由教师人工打分。教师能看到每个学生的答卷，最终成绩可以改 |
-| 成绩 | 成绩总表：行是学生，列是各个作业和测试，最后一列是总评。总评按"Σ 活动得分 ÷ 满分 × 成绩占比"自动计算；教师可以手动修改任意单元格，改过的值优先；可以导出 Excel |
+| 测试 | 设置开始和结束时间、作答时长、作答次数、满分、成绩占比、是否打乱选项顺序。题目编辑器支持单选、多选、判断、填空、简答 5 种题型，可以批量删除题目。学生到开始时间才能作答，有倒计时，时间到自动交卷。客观题自动判分，简答题由教师人工打分。教师能看到每个学生的答卷，最终成绩可以改。**公布成绩**：不公布 / 交卷后立即公布 / 定时公布，未公布前学生看不到得分和答案 |
+| 成绩 | 成绩总表：行是学生，列是各个作业和测试，最后一列是总评。总评按"Σ 活动得分 ÷ 满分 × 成绩占比"自动计算；教师可以手动修改任意单元格，改过的值优先；可以导出 Excel。**成绩占比合计不能超过 100%**：新建/编辑活动时提示剩余可分配比例，成绩页有「成绩比例设定」弹窗一次调整所有占比 |
 | 成员 | 查看课程成员；教师可以按用户名添加或移除学生，也可以设置助教 |
-| 课程设置 | 修改课程名称、封面、简介、学期；重新生成访问码；归档课程 |
+| 课程设置 | 修改课程名称、封面、简介、学期；重新生成访问码；归档课程；**完成指标**（音视频需累积观看的百分比，作业/测试是提交即完成还是成绩达标才算完成） |
 
 ### 可选（P0 全部做完、还有时间再做）
 - 课程公告：教师发公告，可以设置开放和截止时间，首页显示最新公告
@@ -73,7 +73,7 @@ cource/
 │   │   ├── serializers.py        # ORM → 返回 dict
 │   │   ├── routers/              # auth, files, dashboard, courses（含成员）, content（大纲/章节/活动/进度）,
 │   │   │                         # submissions（作业/题目/测试/批改/打包）, grades, admin
-│   │   └── services/             # visibility.py（可见性与可提交）、scoring.py（成绩）、exam_grader.py（判分）、
+│   │   └── services/             # visibility.py（可见性、可提交、成绩是否公布）、scoring.py（成绩）、completion.py（完成指标）、exam_grader.py（判分）、
 │   │                             # exam.py（作答流程）、course_ops.py（访问码/排序/复制）、export.py（Excel/zip）
 │   ├── seed.py                   # 生成演示数据
 │   └── tests/                    # test_unit.py（纯函数）、test_flow.py（接口主流程与权限）
@@ -106,7 +106,8 @@ cource/
 
 ```
 User(id, username unique, password_hash, name, avatar, role[admin|teacher|student], student_no, created_at)
-Course(id, name, code(6位访问码 unique), cover, description, semester, owner_id, archived, created_at)
+Course(id, name, code(6位访问码 unique), cover, description, semester, owner_id, archived,
+       completion JSON(见 schemas.CompletionSettings：video_percent, homework, exam, pass_percent), created_at)
 CourseMember(course_id, user_id, role[teacher|ta|student], joined_at)            主键(course_id, user_id)
 Chapter(id, course_id, parent_id NULL=章节 / 非空=单元, title, sort)
 Activity(id, course_id, chapter_id, type[material|video|homework|exam],
@@ -119,7 +120,8 @@ Activity(id, course_id, chapter_id, type[material|video|homework|exam],
      material → {file_ids: [], allow_download: true}
      video    → {file_id | url, duration_s}
      homework → {max_attempts(0=不限), score_rule: "last"|"max"|"avg"}
-     exam     → {duration_min(0=不限时), attempts(0=不限), shuffle_options, show_answer}
+     exam     → {duration_min(0=不限时), attempts(0=不限), shuffle_options, show_answer,
+                 score_publish: "none"|"immediate"|"scheduled", score_publish_at}
    测试的 full_score 在保存题目时自动更新为题目分值之和
 FileObj(id, key(随机串), owner_id, filename, path, mime, size, created_at)
 Question(id, activity_id, type[single|multiple|judge|fill|short], stem, options JSON,
@@ -129,7 +131,7 @@ Submission(id, activity_id, user_id, attempt_no, content TEXT, file_ids JSON, an
            started_at, submitted_at, graded_at)
    作业和测试共用这张表：作业用 content 和 file_ids，测试用 answers = {question_id: answer}
 GradeOverride(course_id, user_id, activity_id NULL=总评, score)     # 教师手动改过的分数
-Progress(activity_id, user_id, completed, watched_seconds, last_pos, updated_at)
+Progress(activity_id, user_id, completed, watched_seconds, last_pos, duration(前端上报的视频时长), updated_at)
 RecentVisit(user_id, course_id, visited_at)
 ```
 
@@ -150,6 +152,14 @@ RecentVisit(user_id, course_id, visited_at)
   - 填空：每个空单独判分，比较前去掉首尾空格；一个空有多个正确答案时用 `|` 分隔。
   - 简答：先记 0 分，等教师打分后再重新算总分。
 - 课程总评 = Σ（活动得分 ÷ 活动满分 × 成绩占比）。有 `GradeOverride` 的格子用改过的值。
+- 成绩占比：只有作业和测试计分（资料、视频的占比强制为 0）；一门课所有作业、测试的占比合计不能超过 100%，新建、编辑和「成绩比例设定」都会校验。
+
+**成绩公布 `visibility.score_published`**
+- 只对测试生效（作业批改后学生即可见）。未公布时，所有给学生的接口都去掉分数（`score`、`auto_score`、`question_scores`、逐题 `got`），也不显示答案和解析；学生的成绩表里该列标 `hidden`，且不计入学生看到的总评。教师和助教始终能看到。
+
+**完成指标 `services/completion.py`**
+- 资料：打开即完成；视频：累积观看 ≥ `video_percent`%（0 表示打开即完成）；作业/测试：`submit` 提交即完成，`pass` 计入成绩的得分 ≥ 满分的 `pass_percent`%。
+- 完成状态按课程当前规则**动态计算**，老师改了规则，学生的进度立即按新规则显示。
 
 **权限 `deps.py`**
 - 管理员：所有操作都可以。
@@ -193,6 +203,7 @@ PUT  /api/submissions/{id}/grade {score?, comment?, question_scores?}
 GET  /api/activities/{id}/export.zip    # 作业打包下载
 POST /api/activities/{id}/progress {watched_seconds, last_pos}
 GET  /api/courses/{id}/grades           PUT /api/courses/{id}/grades/override
+GET/PUT /api/courses/{id}/score-ratios  # 成绩比例一览（含剩余可分配）/ 一次调整多个活动的占比
 GET  /api/courses/{id}/grades/export.xlsx
 CRUD /api/admin/users                   POST /api/admin/users/import (CSV)
 ```
@@ -254,4 +265,5 @@ seed 会准备 2 门完整的课程，包括章节、资料、视频、作业（
 - 不要引入 Redis、Celery、WebSocket、消息队列、微服务。单进程运行。
 - 不要提交 `.env`、`data/`、`uploads/` 到 git。
 - 根目录的手册只用来理解功能，不要把里面的图片和文字搬进产品界面。
-- 测试只写这几块：成绩计算、可见性、测试自动判分、权限（学生不能访问没加入的课程）。
+- 测试只写这几块：成绩计算、可见性、测试自动判分、权限（学生不能访问没加入的课程）、成绩占比校验、完成指标、成绩公布（`tests/test_features.py`）。
+- 根目录的 `课程平台爬取数据/` 含真实个人信息和登录凭据，已在 `.gitignore` 中；只能参考其中的截图和页面规格，不要把里面的任何数据用进代码、seed 或提交。

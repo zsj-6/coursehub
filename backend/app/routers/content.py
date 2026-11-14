@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db, utcnow
 from app.deps import CourseCtx, check_activity, check_course, get_current_user, require_course_member
-from app.models import Activity, Chapter, CourseMember, FileObj, Progress, Submission, User
+from app.models import Activity, Chapter, Course, CourseMember, FileObj, Progress, Submission, User
 from app.schemas import (
     SETTINGS_MODELS,
     ActivityIn,
@@ -21,9 +21,9 @@ from app.schemas import (
     ProgressIn,
 )
 from app.serializers import activity_brief, activity_detail
-from app.services import scoring
+from app.services import completion, scoring
 from app.services.course_ops import move, next_sort
-from app.services.visibility import is_visible
+from app.services.visibility import is_visible, score_published
 
 router = APIRouter(tags=["课程建设"])
 
@@ -49,19 +49,7 @@ def outline(
 
     completed: set[int] = set()
     if ctx.is_student:
-        completed = set(
-            db.scalars(
-                select(Progress.activity_id).where(Progress.user_id == ctx.user.id, Progress.completed.is_(True))
-            )
-        )
-        # 交过的作业/测试也算完成
-        completed |= set(
-            db.scalars(
-                select(Submission.activity_id).where(
-                    Submission.user_id == ctx.user.id, Submission.status != "draft"
-                )
-            )
-        )
+        completed = completion.completed_activity_ids(db, ctx.course, ctx.user.id, acts)
 
     acts_by_ch: dict[int, list[dict]] = defaultdict(list)
     for a in acts:
@@ -149,9 +137,9 @@ def move_chapter(chapter_id: int, body: MoveIn, user: User = Depends(get_current
 # ---------------- 学习活动 ----------------
 def _normalize_settings(db: Session, act_type: str, raw: dict, user: User) -> dict:
     try:
-        settings = SETTINGS_MODELS[act_type](**(raw or {})).model_dump()
+        settings = SETTINGS_MODELS[act_type](**(raw or {})).model_dump(mode="json")
     except ValidationError as e:
-        raise HTTPException(422, f"活动设置不正确：{e.errors()[0]['msg']}")
+        raise HTTPException(422, f"活动设置不正确：{e.errors()[0]['msg'].removeprefix('Value error, ')}")
     file_ids = settings.get("file_ids") or ([settings["file_id"]] if settings.get("file_id") else [])
     if file_ids:
         found = set(db.scalars(select(FileObj.id).where(FileObj.id.in_(file_ids))))
@@ -167,6 +155,16 @@ def _check_times(a: Activity) -> None:
         raise HTTPException(400, "开放时间必须早于结束时间")
     if a.start_at and a.due_at and a.start_at >= a.due_at:
         raise HTTPException(400, "开始时间必须早于截止时间")
+
+
+def _check_ratio(db: Session, act: Activity) -> None:
+    """作业、测试的成绩占比合计不能超过 100%。"""
+    if act.type not in scoring.GRADED_TYPES:
+        act.score_ratio = 0
+        return
+    others = scoring.ratio_total(db, act.course_id, exclude_id=act.id)
+    if others + (act.score_ratio or 0) > 100 + 1e-6:
+        raise HTTPException(400, f"成绩占比合计不能超过 100%，当前最多还能分配 {max(100 - others, 0):g}%")
 
 
 def _check_chapter(db: Session, course_id: int, chapter_id: int) -> None:
@@ -192,6 +190,7 @@ def create_activity(
         **data,
     )
     _check_times(act)
+    _check_ratio(db, act)
     db.add(act)
     db.commit()
     return activity_detail(db, act)
@@ -227,10 +226,12 @@ def list_activities(
         for a in acts:
             mine = subs_by.get((a.id, ctx.user.id), [])
             item = activity_brief(a)
+            published = score_published(a)
             item.update(
                 my_status=scoring.submission_status(mine),
-                my_score=scoring.activity_score(a, mine),
+                my_score=scoring.activity_score(a, mine) if published else None,
                 my_attempts=len(mine),
+                score_published=published,
             )
             result.append(item)
         return result
@@ -264,9 +265,14 @@ def get_activity(activity_id: int, user: User = Depends(get_current_user), db: S
     data["my_role"] = role
     if role == "student":
         p = db.get(Progress, (act.id, user.id))
+        course = db.get(Course, act.course_id)
+        done = act.id in completion.completed_activity_ids(db, course, user.id, [act])
         data["progress"] = (
-            {"completed": p.completed, "watched_seconds": p.watched_seconds, "last_pos": p.last_pos} if p else None
+            {"completed": done, "watched_seconds": p.watched_seconds, "last_pos": p.last_pos}
+            if p
+            else ({"completed": True, "watched_seconds": 0, "last_pos": 0} if done else None)
         )
+        data["score_published"] = score_published(act)
     return data
 
 
@@ -288,6 +294,7 @@ def update_activity(
             continue
         setattr(act, k, v)
     _check_times(act)
+    _check_ratio(db, act)
     db.commit()
     return activity_detail(db, act)
 
@@ -347,11 +354,13 @@ def report_progress(
     p.watched_seconds = (p.watched_seconds or 0) + body.delta_seconds
     if body.last_pos is not None:
         p.last_pos = body.last_pos
-    duration = (act.settings or {}).get("duration_s") or body.duration
-    if body.completed and act.type == "material":
+    if body.duration:
+        p.duration = body.duration
+    if act.type == "material" and body.completed:
         p.completed = True
-    if act.type == "video" and duration and p.watched_seconds >= 0.9 * duration:
-        p.completed = True
+    if act.type == "video":
+        # 完成与否按课程的完成指标动态计算；这里记一份方便统计
+        p.completed = completion.video_done(act, p, completion.criteria(db.get(Course, act.course_id)))
     p.updated_at = utcnow()
     db.commit()
     return {"completed": p.completed, "watched_seconds": p.watched_seconds, "last_pos": p.last_pos}

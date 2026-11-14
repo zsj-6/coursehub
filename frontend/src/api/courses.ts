@@ -1,5 +1,11 @@
 import { download, http } from './http'
-import type { ChapterNode, Course, GradeTable, MemberRole, UserBrief } from './types'
+import type { ActivityType, ChapterNode, CompletionSettings, Course, GradeTable, MemberRole, UserBrief } from './types'
+
+export interface ScoreRatios {
+  items: { id: number; title: string; type: ActivityType; full_score: number; score_ratio: number; is_published: boolean }[]
+  total: number
+  left: number
+}
 
 export const coursesApi = {
   list: (params: { q?: string; archived?: boolean } = {}) =>
@@ -7,7 +13,10 @@ export const coursesApi = {
   create: (data: { name: string; description?: string; semester?: string }) =>
     http.post<Course>('/courses', data).then((r) => r.data),
   get: (id: number) => http.get<Course>(`/courses/${id}`).then((r) => r.data),
-  update: (id: number, data: Partial<Pick<Course, 'name' | 'description' | 'semester' | 'cover' | 'archived'>>) =>
+  update: (
+    id: number,
+    data: Partial<Pick<Course, 'name' | 'description' | 'semester' | 'cover' | 'archived'>> & { completion?: CompletionSettings },
+  ) =>
     http.put<Course>(`/courses/${id}`, data).then((r) => r.data),
   remove: (id: number) => http.delete(`/courses/${id}`).then((r) => r.data),
   join: (code: string) => http.post<Course>('/courses/join', { code }).then((r) => r.data),
@@ -37,5 +46,8 @@ export const coursesApi = {
   grades: (id: number) => http.get<GradeTable>(`/courses/${id}/grades`).then((r) => r.data),
   setOverride: (id: number, data: { user_id: number; activity_id: number | null; score: number | null }) =>
     http.put(`/courses/${id}/grades/override`, data).then((r) => r.data),
+  scoreRatios: (id: number) => http.get<ScoreRatios>(`/courses/${id}/score-ratios`).then((r) => r.data),
+  setScoreRatios: (id: number, ratios: Record<number, number>) =>
+    http.put<ScoreRatios>(`/courses/${id}/score-ratios`, { ratios }).then((r) => r.data),
   exportGrades: (id: number) => download(`/courses/${id}/grades/export.xlsx`, '成绩.xlsx'),
 }

@@ -24,6 +24,19 @@ export interface FileInfo {
   url: string
 }
 
+export interface CompletionSettings {
+  video_percent: number
+  homework: 'submit' | 'pass'
+  exam: 'submit' | 'pass'
+  pass_percent: number
+}
+
+export interface ScorePublishInfo {
+  score_published: boolean
+  score_publish: 'none' | 'immediate' | 'scheduled'
+  score_publish_at: string | null
+}
+
 export interface Course {
   id: number
   name: string
@@ -36,6 +49,7 @@ export interface Course {
   created_at: string
   my_role: MemberRole | null
   student_count: number | null
+  completion: CompletionSettings
 }
 
 export interface ActivityBrief {
@@ -57,6 +71,7 @@ export interface ActivityBrief {
   my_status?: SubStatus
   my_score?: number | null
   my_attempts?: number
+  score_published?: boolean
   student_count?: number
   submitted_count?: number
   pending_count?: number
@@ -71,6 +86,7 @@ export interface Activity extends ActivityBrief {
   question_count?: number
   my_role?: MemberRole
   progress?: { completed: boolean; watched_seconds: number; last_pos: number } | null
+  score_published?: boolean
 }
 
 export interface ChapterNode {
@@ -102,7 +118,7 @@ export interface PaperQuestion {
   blank_count?: number
 }
 
-export interface Submission {
+export interface Submission extends Partial<ScorePublishInfo> {
   id: number
   activity_id: number
   user_id: number
@@ -138,7 +154,7 @@ export interface GradeTable {
   ratio_sum: number
   rows: {
     user: UserBrief
-    cells: Record<string, { raw: number | null; override: number | null; final: number | null; status: SubStatus }>
+    cells: Record<string, { raw: number | null; override: number | null; final: number | null; status: SubStatus; hidden?: boolean }>
     total_calc: number
     total_override: number | null
     total: number

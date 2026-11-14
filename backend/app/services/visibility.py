@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from app.db import utcnow
+from app.db import to_utc, utcnow
 from app.models import Activity, Submission
 
 # 测试到时间后，给前端自动交卷留的网络缓冲
@@ -65,3 +65,25 @@ def exam_expired(act: Activity, sub: Submission, now: datetime | None = None) ->
     now = now or utcnow()
     deadline = exam_deadline(act, sub)
     return deadline is not None and now > deadline + EXAM_GRACE
+
+
+def _parse_dt(v) -> datetime | None:
+    if not v:
+        return None
+    if isinstance(v, datetime):
+        return to_utc(v)
+    return to_utc(datetime.fromisoformat(str(v).replace("Z", "+00:00")))
+
+
+def score_published(act: Activity, now: datetime | None = None) -> bool:
+    """学生能否看到该活动的得分。只有测试有“公布成绩”设置，作业批改后即可见。"""
+    if act.type != "exam":
+        return True
+    s = act.settings or {}
+    mode = s.get("score_publish", "immediate")
+    if mode == "none":
+        return False
+    if mode == "scheduled":
+        at = _parse_dt(s.get("score_publish_at"))
+        return at is not None and (now or utcnow()) >= at
+    return True

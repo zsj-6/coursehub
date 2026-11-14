@@ -2,6 +2,7 @@
 import { ElMessage } from 'element-plus'
 import { computed, reactive, ref, watch } from 'vue'
 import { activitiesApi } from '@/api/activities'
+import { coursesApi } from '@/api/courses'
 import type { Activity, ActivityType, FileInfo } from '@/api/types'
 import FileUploader from '@/components/FileUploader.vue'
 import { TYPE_LABEL, toISO } from '@/utils/format'
@@ -42,11 +43,16 @@ const form = reactive({
   attempts: 1,
   shuffle_options: false,
   show_answer: true,
+  score_publish: 'immediate' as 'none' | 'immediate' | 'scheduled',
+  score_publish_at: null as Date | null,
 })
+/** 本活动最多还能分配的成绩占比（其他作业/测试已占用的之外） */
+const ratioLeft = ref(100)
+const graded = computed(() => form.type === 'homework' || form.type === 'exam')
 const saving = ref(false)
 const isEdit = computed(() => !!props.activity)
 
-watch(visible, (v) => {
+watch(visible, async (v) => {
   if (!v) return
   const a = props.activity
   const s = a?.settings || {}
@@ -72,7 +78,15 @@ watch(visible, (v) => {
     attempts: s.attempts ?? 1,
     shuffle_options: s.shuffle_options ?? false,
     show_answer: s.show_answer ?? true,
+    score_publish: s.score_publish ?? 'immediate',
+    score_publish_at: s.score_publish_at ? new Date(s.score_publish_at) : null,
   })
+  ratioLeft.value = 100
+  const info = await coursesApi.scoreRatios(props.courseId).catch(() => null)
+  if (info) {
+    const own = a && (a.type === 'homework' || a.type === 'exam') ? a.score_ratio : 0
+    ratioLeft.value = Math.round((info.left + own) * 100) / 100
+  }
 })
 
 function buildPayload(publish: boolean | null) {
@@ -105,6 +119,8 @@ function buildPayload(publish: boolean | null) {
       attempts: form.attempts,
       shuffle_options: form.shuffle_options,
       show_answer: form.show_answer,
+      score_publish: form.score_publish,
+      score_publish_at: form.score_publish === 'scheduled' ? toISO(form.score_publish_at) : null,
     }
   }
   return p
@@ -120,6 +136,8 @@ function validate(): string | null {
   }
   if (form.scheduled && !form.open_range) return '请选择开放时间段'
   if (form.type === 'exam' && form.start_at && form.due_at && form.start_at >= form.due_at) return '开始时间必须早于结束时间'
+  if (graded.value && form.score_ratio > ratioLeft.value) return `成绩占比合计不能超过 100%，本活动最多 ${ratioLeft.value}%`
+  if (form.type === 'exam' && form.score_publish === 'scheduled' && !form.score_publish_at) return '请选择成绩公布时间'
   return null
 }
 
@@ -192,8 +210,9 @@ async function save(publish: boolean | null) {
         <el-form-item label="满分 / 占比">
           <el-input-number v-model="form.full_score" :min="1" :max="1000" />
           <span class="muted" style="margin: 0 8px">占课程总评</span>
-          <el-input-number v-model="form.score_ratio" :min="0" :max="100" />
+          <el-input-number v-model="form.score_ratio" :min="0" :max="ratioLeft" />
           <span class="muted" style="margin-left: 4px">%</span>
+          <div class="muted ratio-tip">总成绩比例不能超过 100%，本活动最多可设 {{ ratioLeft }}%</div>
         </el-form-item>
         <el-form-item label="提交次数">
           <el-input-number v-model="form.max_attempts" :min="0" :max="99" />
@@ -224,12 +243,29 @@ async function save(publish: boolean | null) {
           <span class="muted" style="margin-left: 8px">0 表示不限，多次作答取最高分</span>
         </el-form-item>
         <el-form-item label="成绩占比">
-          <el-input-number v-model="form.score_ratio" :min="0" :max="100" />
+          <el-input-number v-model="form.score_ratio" :min="0" :max="ratioLeft" />
           <span class="muted" style="margin-left: 8px">% · 满分由题目分值相加得出</span>
+          <div class="muted ratio-tip">总成绩比例不能超过 100%，本活动最多可设 {{ ratioLeft }}%</div>
         </el-form-item>
         <el-form-item label="组卷设置">
           <el-checkbox v-model="form.shuffle_options">选项乱序</el-checkbox>
-          <el-checkbox v-model="form.show_answer">交卷后显示答案和解析</el-checkbox>
+        </el-form-item>
+        <el-form-item label="公布成绩">
+          <el-radio-group v-model="form.score_publish">
+            <el-radio value="none">不公布</el-radio>
+            <el-radio value="immediate">交卷后立即公布</el-radio>
+            <el-radio value="scheduled">定时公布</el-radio>
+          </el-radio-group>
+          <el-date-picker
+            v-if="form.score_publish === 'scheduled'"
+            v-model="form.score_publish_at"
+            type="datetime"
+            placeholder="公布时间"
+            style="margin-top: 8px"
+          />
+          <div style="width: 100%">
+            <el-checkbox v-model="form.show_answer">成绩公布后，学生可以看到答案和解析</el-checkbox>
+          </div>
         </el-form-item>
       </template>
 
@@ -260,3 +296,10 @@ async function save(publish: boolean | null) {
     </template>
   </el-dialog>
 </template>
+
+<style scoped>
+.ratio-tip {
+  width: 100%;
+  line-height: 1.6;
+}
+</style>

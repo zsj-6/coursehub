@@ -1,5 +1,5 @@
 import { download, http } from './http'
-import type { Activity, ActivityBrief, PaperQuestion, Question, Submission, SubmissionRow, SubStatus } from './types'
+import type { Activity, ActivityBrief, PaperQuestion, Question, ScorePublishInfo, Submission, SubmissionRow, SubStatus } from './types'
 
 export interface ExamPaper {
   submission_id: number
@@ -11,7 +11,7 @@ export interface ExamPaper {
   questions: PaperQuestion[]
 }
 
-export interface MySubmissions {
+export interface MySubmissions extends ScorePublishInfo {
   submissions: Submission[]
   draft_id: number | null
   status: SubStatus

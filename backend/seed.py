@@ -176,12 +176,14 @@ def seed_ds_course(db, t1: User, students: list[User]) -> Course:
                        settings={"max_attempts": 0, "score_rule": "max"}, created_at=NOW - 3 * DAY)
     add_activity(db, c, u22, 0, type="video", title="链表图解（视频）", is_published=True, open_at=NOW + 2 * DAY,
                  settings={"url": SAMPLE_VIDEO, "duration_s": 5}, created_at=NOW - 1 * DAY)
-    ex1 = add_activity(db, c, ch3, 0, type="exam", title="阶段测验：线性表", description="闭卷，限时 30 分钟，只能作答一次。",
+    ex1 = add_activity(db, c, ch3, 0, type="exam", title="阶段测验：线性表", description="闭卷，限时 30 分钟，只能作答一次。交卷后立即公布成绩。",
                        is_published=True, start_at=NOW - 7 * DAY, due_at=NOW - 6 * DAY, full_score=0, score_ratio=30,
                        settings={"duration_min": 30, "attempts": 1, "shuffle_options": True, "show_answer": True}, created_at=NOW - 8 * DAY)
-    ex2 = add_activity(db, c, ch3, 1, type="exam", title="栈和队列小测", description="可作答 2 次，取最高分。",
+    ex2 = add_activity(db, c, ch3, 1, type="exam", title="栈和队列小测", description="可作答 2 次，取最高分。成绩在测试结束后统一公布。",
                        is_published=True, start_at=NOW - 1 * DAY, due_at=NOW + 3 * DAY, full_score=0, score_ratio=30,
-                       settings={"duration_min": 20, "attempts": 2, "shuffle_options": False, "show_answer": True}, created_at=NOW - 2 * DAY)
+                       settings={"duration_min": 20, "attempts": 2, "shuffle_options": False, "show_answer": True,
+                                 "score_publish": "scheduled", "score_publish_at": (NOW + 3 * DAY).isoformat()},
+                       created_at=NOW - 2 * DAY)
     add_activity(db, c, ch4, 0, type="homework", title="作业3：二叉树遍历（草稿）", description="尚未发布。", is_published=False,
                  full_score=100, score_ratio=0, settings={"max_attempts": 1, "score_rule": "last"})
 

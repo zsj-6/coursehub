@@ -3,6 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { coursesApi } from '@/api/courses'
+import type { CompletionSettings } from '@/api/types'
 import { filesApi } from '@/api/files'
 import { useCourseStore } from '@/stores/course'
 import { useUserStore } from '@/stores/user'
@@ -33,6 +34,22 @@ async function onCover(e: Event) {
   if (!f) return
   if (!f.type.startsWith('image/')) return ElMessage.warning('请选择图片')
   form.cover = (await filesApi.upload(f)).url
+}
+
+// 完成指标
+const completion = reactive<CompletionSettings>({ ...c.completion })
+const videoOn = ref(completion.video_percent > 0)
+const savingCompletion = ref(false)
+async function saveCompletion() {
+  savingCompletion.value = true
+  try {
+    const payload = { ...completion, video_percent: videoOn.value ? completion.video_percent || 1 : 0 }
+    const updated = await coursesApi.update(c.id, { completion: payload })
+    cs.course = { ...cs.course!, completion: updated.completion }
+    ElMessage.success('完成指标已保存，学生的完成状态会按新规则重新计算')
+  } finally {
+    savingCompletion.value = false
+  }
 }
 
 async function regenerate() {
@@ -92,6 +109,41 @@ async function remove() {
         <span class="code">{{ cs.course?.code }}</span>
         <el-button size="small" @click="regenerate">重新生成</el-button>
       </div>
+    </section>
+
+    <section class="card" style="margin-top: 16px">
+      <h3 style="margin-top: 0">完成指标 <span class="muted" style="font-weight: 400">达到指标即视为完成学习活动，用于学生的学习进度</span></h3>
+      <el-form label-width="90px" style="max-width: 620px">
+        <el-form-item label="参考资料"><span class="muted">打开即完成</span></el-form-item>
+        <el-form-item label="音视频">
+          <el-radio-group v-model="videoOn">
+            <el-radio :value="false">打开即完成</el-radio>
+            <el-radio :value="true">需累积观看</el-radio>
+          </el-radio-group>
+          <template v-if="videoOn">
+            <el-input-number v-model="completion.video_percent" :min="1" :max="100" size="small" style="margin-left: 12px" />
+            <span class="muted" style="margin-left: 4px">% 以上</span>
+          </template>
+        </el-form-item>
+        <el-form-item label="作业">
+          <el-radio-group v-model="completion.homework">
+            <el-radio value="submit">提交作业</el-radio>
+            <el-radio value="pass">达标成绩</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="测试">
+          <el-radio-group v-model="completion.exam">
+            <el-radio value="submit">提交测试</el-radio>
+            <el-radio value="pass">达标成绩</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="completion.homework === 'pass' || completion.exam === 'pass'" label="达标线">
+          得分达到满分的
+          <el-input-number v-model="completion.pass_percent" :min="0" :max="100" size="small" style="margin: 0 6px" />
+          %
+        </el-form-item>
+        <el-form-item><el-button type="primary" :loading="savingCompletion" @click="saveCompletion">保存</el-button></el-form-item>
+      </el-form>
     </section>
 
     <section class="card danger" style="margin-top: 16px">

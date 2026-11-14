@@ -90,7 +90,11 @@ async function saveGrade() {
       </div>
       <span class="spacer" />
       <div class="score-box">
-        <template v-if="sub.status === 'graded'">
+        <template v-if="sub.score_published === false && !cs.canGrade">
+          <div class="big pending">成绩未公布</div>
+          <div class="muted">{{ sub.score_publish === 'scheduled' ? `将于 ${fmt(sub.score_publish_at)} 公布` : '等待老师公布' }}</div>
+        </template>
+        <template v-else-if="sub.status === 'graded'">
           <div class="big">{{ fmtScore(sub.score) }}</div>
           <div class="muted">/ {{ act?.full_score ?? '' }} 分</div>
         </template>
@@ -101,7 +105,15 @@ async function saveGrade() {
       </div>
     </section>
 
-    <el-alert v-if="!sub.show_answer" type="info" :closable="false" show-icon title="老师设置了交卷后不显示答案" style="margin-top: 12px" />
+    <el-alert v-if="cs.canGrade && sub.score_published === false" type="info" :closable="false" show-icon title="该测试的成绩尚未对学生公布" style="margin-top: 12px" />
+    <el-alert
+      v-else-if="!sub.show_answer && !cs.canGrade"
+      type="info"
+      :closable="false"
+      show-icon
+      :title="sub.score_published === false ? '成绩公布后才能查看得分和答案' : '老师设置了不显示答案和解析'"
+      style="margin-top: 12px"
+    />
     <section v-if="sub.comment && !cs.canGrade" class="card" style="margin-top: 12px">
       <b>老师评语：</b>{{ sub.comment }}
     </section>
@@ -116,7 +128,7 @@ async function saveGrade() {
           <span class="muted">得分</span>
           <el-input-number v-model="manual[q.id]" :min="0" :max="q.score" :precision="1" size="small" />
         </template>
-        <b v-else class="got">{{ q.got === null || q.got === undefined ? '待评分' : `${fmtScore(q.got)} 分` }}</b>
+        <b v-else-if="sub.score_published !== false || cs.canGrade" class="got">{{ q.got === null || q.got === undefined ? '待评分' : `${fmtScore(q.got)} 分` }}</b>
       </div>
       <div class="rich-text stem">{{ q.stem }}</div>
       <div v-if="(q.type === 'single' || q.type === 'multiple') && q.options.length" class="opts">
