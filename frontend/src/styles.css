@@ -1,0 +1,85 @@
+:root {
+  --ch-primary: #3bb4b8;
+  --ch-bg: #f4f6f8;
+  --ch-card: #ffffff;
+  --ch-border: #e6e9ed;
+  --ch-text: #2c3e50;
+  --ch-text-2: #6b7785;
+  --ch-header-h: 56px;
+
+  /* Element Plus 主色改成青绿色 */
+  --el-color-primary: #3bb4b8;
+  --el-color-primary-light-3: #76cbce;
+  --el-color-primary-light-5: #9dd9db;
+  --el-color-primary-light-7: #c4e8e9;
+  --el-color-primary-light-8: #d8f0f1;
+  --el-color-primary-light-9: #ebf7f8;
+  --el-color-primary-dark-2: #2f9093;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--ch-bg);
+  color: var(--ch-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+}
+
+a {
+  color: var(--ch-primary);
+  text-decoration: none;
+}
+
+.card {
+  background: var(--ch-card);
+  border: 1px solid var(--ch-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--ch-text-2);
+  font-size: 13px;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.empty-tip {
+  color: var(--ch-text-2);
+  text-align: center;
+  padding: 32px 0;
+}
+
+.rich-text {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  word-break: break-word;
+}

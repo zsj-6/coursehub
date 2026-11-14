@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+backend/data/
+backend/uploads/
+node_modules/
+frontend/dist/
+# 第三方原始手册（版权材料，不公开）
+docs/
+dist/
+*.log
