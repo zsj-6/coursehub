@@ -240,3 +240,17 @@ class OverrideIn(BaseModel):
     user_id: int
     activity_id: int | None = None  # 为空表示改总评
     score: float | None = Field(None, ge=0)  # 为空表示撤销手动修改
+
+
+# ---------- 公告与讨论 ----------
+class AnnouncementIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    content: str = ""
+    open_at: DT | None = None
+    close_at: DT | None = None
+    pinned: bool = False
+
+
+class PostIn(BaseModel):
+    content: str = Field(min_length=1, max_length=5000)
+    parent_id: int | None = None

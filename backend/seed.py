@@ -13,10 +13,13 @@ from app.config import settings
 from app.db import SessionLocal, engine, init_db, utcnow
 from app.models import (
     Activity,
+    Announcement,
     Chapter,
     Course,
     CourseMember,
     FileObj,
+    Post,
+    PostLike,
     Progress,
     Question,
     RecentVisit,
@@ -243,6 +246,32 @@ def seed_ds_course(db, t1: User, students: list[User]) -> Course:
             db.add(Progress(activity_id=m1.id, user_id=s.id, completed=True))
         if random.random() < 0.6:
             db.add(Progress(activity_id=v1.id, user_id=s.id, completed=True, watched_seconds=5, last_pos=5))
+
+    # 公告
+    db.add_all([
+        Announcement(course_id=c.id, author_id=t1.id, title="欢迎选修数据结构", pinned=True, created_at=NOW - 10 * DAY,
+                     content="本课程采用线上学习 + 线下讨论的方式。请先浏览第一章课件，再完成作业 1。"),
+        Announcement(course_id=c.id, author_id=t1.id, title="阶段测验安排", created_at=NOW - 2 * DAY,
+                     content="线性表阶段测验已开放，限时 30 分钟，只能作答一次，请合理安排时间。"),
+        Announcement(course_id=c.id, author_id=t1.id, title="期中复习答疑（定时公告）", open_at=NOW + 3 * DAY,
+                     content="下周三晚 7 点线上答疑，公告到时间才对学生可见。"),
+    ])
+    # 作业讨论区
+    q1 = Post(activity_id=hw1.id, user_id=learners[0].id, created_at=NOW - 4 * DAY,
+              content="第二段代码里内层循环是 j < i，复杂度是 O(n²) 还是 O(n log n)？")
+    db.add(q1)
+    db.flush()
+    db.add_all([
+        Post(activity_id=hw1.id, user_id=t1.id, parent_id=q1.id, created_at=NOW - 4 * DAY + timedelta(hours=2),
+             content="把内层循环次数加起来：1 + 2 + … + (n-1)，再想想这个和是什么量级。"),
+        Post(activity_id=hw1.id, user_id=learners[3].id, parent_id=q1.id, created_at=NOW - 3 * DAY,
+             content="求和是 n(n-1)/2，所以是 O(n²)。"),
+        Post(activity_id=hw1.id, user_id=t1.id, pinned=True, created_at=NOW - 5 * DAY,
+             content="提醒：推导过程比结论更重要，只写答案会扣分。"),
+    ])
+    db.flush()
+    for s in learners[:6]:
+        db.add(PostLike(post_id=q1.id, user_id=s.id))
     return c
 
 

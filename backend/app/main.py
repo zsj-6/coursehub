@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import DEFAULT_JWT_SECRET, settings
 from app.db import init_db
-from app.routers import admin, auth, content, courses, dashboard, files, grades, submissions
+from app.routers import admin, auth, community, content, courses, dashboard, files, grades, submissions
 
 
 @asynccontextmanager
@@ -29,7 +29,7 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 
-for r in (auth, files, dashboard, courses, content, submissions, grades, admin):
+for r in (auth, files, dashboard, courses, content, submissions, grades, community, admin):
     app.include_router(r.router, prefix="/api")
 
 

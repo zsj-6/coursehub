@@ -107,3 +107,29 @@ def test_score_publish(client):
     # 定时公布必须给时间
     r = client.put(f"/api/activities/{ex['id']}", json={"settings": {"score_publish": "scheduled", "score_publish_at": None}}, headers=t)
     assert r.status_code == 422
+
+
+def test_announcement_visibility_and_posts(client):
+    t, s1, cid, ch = _course(client)
+    now = utcnow()
+    client.post(f"/api/courses/{cid}/announcements", json={"title": "现在可见"}, headers=t)
+    client.post(f"/api/courses/{cid}/announcements", json={"title": "定时", "open_at": (now + timedelta(days=1)).isoformat()}, headers=t)
+    # 学生只看到时间段内的公告，教师都能看到
+    assert [a["title"] for a in client.get(f"/api/courses/{cid}/announcements", headers=s1).json()] == ["现在可见"]
+    assert len(client.get(f"/api/courses/{cid}/announcements", headers=t).json()) == 2
+    assert client.post(f"/api/courses/{cid}/announcements", json={"title": "x"}, headers=s1).status_code == 403
+
+    # 讨论区：学生发帖、回复的回复挂到主帖、点赞；学生不能置顶，也不能删别人的帖子
+    a = _act(client, t, cid, ch).json()
+    root = client.post(f"/api/activities/{a['id']}/posts", json={"content": "提问"}, headers=s1).json()
+    r1 = client.post(f"/api/activities/{a['id']}/posts", json={"content": "回复", "parent_id": root["id"]}, headers=t).json()
+    client.post(f"/api/activities/{a['id']}/posts", json={"content": "再回复", "parent_id": r1["id"]}, headers=s1)
+    client.post(f"/api/posts/{root['id']}/like", headers=t)
+    data = client.get(f"/api/activities/{a['id']}/posts", headers=s1).json()
+    assert len(data["items"]) == 1 and len(data["items"][0]["replies"]) == 2 and data["items"][0]["likes"] == 1
+    assert client.post(f"/api/posts/{root['id']}/pin", headers=s1).status_code == 403
+    assert client.delete(f"/api/posts/{r1['id']}", headers=s1).status_code == 403
+
+    # 未加入课程的学生看不到讨论区
+    s2 = login(client, "s2")
+    assert client.get(f"/api/activities/{a['id']}/posts", headers=s2).status_code == 403

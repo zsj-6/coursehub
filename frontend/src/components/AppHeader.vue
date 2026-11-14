@@ -25,6 +25,7 @@ function onCommand(cmd: string) {
     <nav class="nav">
       <router-link to="/" exact-active-class="active">首页</router-link>
       <router-link to="/courses" active-class="active">我的课程</router-link>
+      <router-link to="/pbl" active-class="active">项目训练</router-link>
       <router-link v-if="store.isAdmin" to="/admin/users" active-class="active">用户管理</router-link>
     </nav>
     <div class="spacer" />

@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { activitiesApi } from '@/api/activities'
 import { coursesApi } from '@/api/courses'
 import type { Activity } from '@/api/types'
+import ActivityDiscussion from '@/components/ActivityDiscussion.vue'
 import ActivityFormDialog from '@/components/ActivityFormDialog.vue'
 import ActivityIcon from '@/components/ActivityIcon.vue'
 import FilePreview from '@/components/FilePreview.vue'
@@ -92,6 +93,7 @@ async function unpublish() {
     </section>
     <HomeworkPanel v-else-if="act.type === 'homework'" :activity="act" :role="role" />
     <ExamPanel v-else-if="act.type === 'exam'" :activity="act" :role="role" />
+    <ActivityDiscussion :key="act.id" :activity-id="act.id" />
 
     <ActivityFormDialog
       v-if="cs.isManager"

@@ -28,6 +28,7 @@ const loading = ref(true)
 const data = ref<{
   stats: { teaching_courses: number; learning_courses: number }
   recent_courses: Course[]
+  announcements?: { id: number; title: string; pinned: boolean; time: string; course: { id: number; name: string } }[]
   todos: TodoItem[]
   feed: FeedItem[]
 } | null>(null)
@@ -144,6 +145,18 @@ const greeting = computed(() => {
         </el-tabs>
       </section>
 
+      <div class="side-stack">
+      <aside class="card side-col">
+        <div class="side-title"><el-icon><Bell /></el-icon> 最新公告</div>
+        <div v-if="!data.announcements?.length" class="empty-tip">暂无公告</div>
+        <router-link v-for="a in data.announcements" :key="a.id" :to="`/courses/${a.course.id}/announcements`" class="ann">
+          <div class="item-title ellipsis">
+            <el-tag v-if="a.pinned" size="small" type="danger" effect="plain">置顶</el-tag>
+            {{ a.title }}
+          </div>
+          <div class="muted ellipsis">{{ a.course.name }} · {{ fromNow(a.time) }}</div>
+        </router-link>
+      </aside>
       <aside class="card side-col">
         <div class="side-title"><el-icon><Clock /></el-icon> 最近访问</div>
         <div v-if="!data.recent_courses.length" class="empty-tip">还没有访问过课程</div>
@@ -155,11 +168,42 @@ const greeting = computed(() => {
           </div>
         </router-link>
       </aside>
+      <router-link to="/pbl" class="card pbl-entry">
+        <el-icon size="26"><Opportunity /></el-icon>
+        <div>
+          <b>项目训练（原型）</b>
+          <div class="muted">组队完成真实项目，按关卡推进</div>
+        </div>
+      </router-link>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.side-stack {
+  display: grid;
+  gap: 16px;
+}
+.ann {
+  display: block;
+  padding: 8px 4px;
+  border-bottom: 1px solid #f0f2f5;
+  color: inherit;
+}
+.ann:hover {
+  background: var(--el-color-primary-light-9);
+}
+.pbl-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ch-primary);
+  background: linear-gradient(120deg, #e9f7f7, #fff);
+}
+.pbl-entry b {
+  color: var(--ch-text);
+}
 .dash {
   min-height: 300px;
 }

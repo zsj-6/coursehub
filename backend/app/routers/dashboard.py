@@ -9,10 +9,10 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db, utcnow
 from app.deps import get_current_user
-from app.models import Activity, Course, CourseMember, RecentVisit, Submission, User
+from app.models import Activity, Announcement, Course, CourseMember, RecentVisit, Submission, User
 from app.serializers import course_out
 from app.services.scoring import submission_status
-from app.services.visibility import is_visible, score_published
+from app.services.visibility import announcement_visible, is_visible, score_published
 
 router = APIRouter(tags=["首页"])
 
@@ -121,6 +121,23 @@ def dashboard(user: User = Depends(get_current_user), db: Session = Depends(get_
                 if missing:
                     feed.append({"kind": "missing", "time": a.due_at, "missing": missing, **_act_ref(a, c)})
 
+    # ---------- 最新公告 ----------
+    announcements = []
+    for a in db.scalars(
+        select(Announcement)
+        .where(Announcement.course_id.in_(list(courses) or [0]))
+        .order_by(Announcement.pinned.desc(), Announcement.created_at.desc())
+    ):
+        if a.course_id in learn_ids and not announcement_visible(a, now):
+            continue
+        c = courses[a.course_id]
+        announcements.append(
+            {"id": a.id, "title": a.title, "content": a.content, "pinned": a.pinned, "time": a.open_at or a.created_at,
+             "course": {"id": c.id, "name": c.name}}
+        )
+        if len(announcements) >= 5:
+            break
+
     feed.sort(key=lambda x: x["time"], reverse=True)
     todos.sort(key=lambda x: (x["time"] is None, x["time"] or now))
 
@@ -132,4 +149,5 @@ def dashboard(user: User = Depends(get_current_user), db: Session = Depends(get_
         "recent_courses": [course_out(c) for c in recent],
         "todos": todos,
         "feed": feed[:30],
+        "announcements": announcements,
     }

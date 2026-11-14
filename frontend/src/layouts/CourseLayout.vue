@@ -27,11 +27,13 @@ const menu = computed(() => {
   const base = `/courses/${props.courseId}`
   const items = [
     { path: base, label: '课程内容', icon: 'Reading' },
+    { path: `${base}/announcements`, label: '公告', icon: 'Bell' },
     { path: `${base}/homework`, label: '作业', icon: 'EditPen' },
     { path: `${base}/exams`, label: '测试', icon: 'Document' },
     { path: `${base}/grades`, label: '成绩', icon: 'TrendCharts' },
     { path: `${base}/members`, label: '成员', icon: 'User' },
   ]
+  if (store.canGrade) items.push({ path: `${base}/analytics`, label: '学习分析', icon: 'DataAnalysis' })
   if (store.isManager) items.push({ path: `${base}/settings`, label: '课程设置', icon: 'Setting' })
   return items
 })

@@ -41,6 +41,8 @@ const router = createRouter({
         { path: 'grades', name: 'course-grades', component: () => import('@/views/course/Grades.vue') },
         { path: 'members', name: 'course-members', component: () => import('@/views/course/Members.vue') },
         { path: 'settings', name: 'course-settings', component: () => import('@/views/course/Settings.vue') },
+        { path: 'announcements', name: 'course-announcements', component: () => import('@/views/course/Announcements.vue') },
+        { path: 'analytics', name: 'course-analytics', component: () => import('@/views/course/Analytics.vue') },
         {
           path: 'activities/:activityId(\\d+)',
           name: 'activity',
@@ -58,6 +60,41 @@ const router = createRouter({
           name: 'submission',
           component: () => import('@/views/activity/SubmissionView.vue'),
           props: (r) => ({ submissionId: Number(r.params.submissionId) }),
+        },
+      ],
+    },
+    // PBL 项目训练原型（纯前端，数据见 src/mock/pbl.ts）
+    {
+      path: '/pbl',
+      component: () => import('@/views/pbl/PblLayout.vue'),
+      children: [
+        { path: '', name: 'pbl-hall', component: () => import('@/views/pbl/Hall.vue') },
+        { path: 'mine', name: 'pbl-mine', component: () => import('@/views/pbl/MyProjects.vue') },
+        { path: 'showcase', name: 'pbl-showcase', component: () => import('@/views/pbl/Showcase.vue') },
+        { path: 'stats', name: 'pbl-stats', component: () => import('@/views/pbl/Stats.vue') },
+        {
+          path: 'programs/:programId',
+          name: 'pbl-program',
+          component: () => import('@/views/pbl/ProgramDetail.vue'),
+          props: true,
+        },
+        {
+          path: 'projects/:projectId',
+          name: 'pbl-project',
+          component: () => import('@/views/pbl/ProjectDetail.vue'),
+          props: true,
+        },
+        {
+          path: 'projects/:projectId/teams/:teamId',
+          name: 'pbl-team',
+          component: () => import('@/views/pbl/TeamSpace.vue'),
+          props: true,
+        },
+        {
+          path: 'projects/:projectId/tasks/:taskId',
+          name: 'pbl-task',
+          component: () => import('@/views/pbl/TaskReview.vue'),
+          props: true,
         },
       ],
     },

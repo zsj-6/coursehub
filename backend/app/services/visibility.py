@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 
 from app.db import to_utc, utcnow
-from app.models import Activity, Submission
+from app.models import Activity, Announcement, Submission
 
 # 测试到时间后，给前端自动交卷留的网络缓冲
 EXAM_GRACE = timedelta(seconds=60)
@@ -17,6 +17,16 @@ def is_visible(act: Activity, now: datetime | None = None) -> bool:
     if act.open_at and now < act.open_at:
         return False
     if act.close_at and now > act.close_at:
+        return False
+    return True
+
+
+def announcement_visible(a: Announcement, now: datetime | None = None) -> bool:
+    """公告在 open_at~close_at 之间对学生可见（为空表示不限）。"""
+    now = now or utcnow()
+    if a.open_at and now < a.open_at:
+        return False
+    if a.close_at and now > a.close_at:
         return False
     return True
 
