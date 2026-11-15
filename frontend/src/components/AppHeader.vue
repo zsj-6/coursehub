@@ -3,6 +3,8 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ROLE_LABEL } from '@/utils/format'
 
+defineProps<{ sidebarNavigation?: boolean }>()
+
 const store = useUserStore()
 const router = useRouter()
 
@@ -22,7 +24,7 @@ function onCommand(cmd: string) {
       <span class="logo-mark">C</span>
       <span>CourseHub</span>
     </router-link>
-    <nav class="nav">
+    <nav class="nav" :class="{ 'sidebar-navigation': sidebarNavigation }">
       <router-link to="/" exact-active-class="active">首页</router-link>
       <router-link to="/courses" active-class="active">我的课程</router-link>
       <router-link to="/pbl" active-class="active">项目训练</router-link>
@@ -97,6 +99,11 @@ function onCommand(cmd: string) {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+}
+@media (min-width: 1000px) {
+  .sidebar-navigation {
+    display: none;
+  }
 }
 @media (max-width: 640px) {
   .app-header {

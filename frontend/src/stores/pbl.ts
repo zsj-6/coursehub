@@ -77,7 +77,8 @@ export const usePblStore = defineStore('pbl', () => {
 
   /** 首次进入时按登录角色选一个默认视角。 */
   function ensurePersona(loginRole: string | undefined) {
-    if (PERSONAS.some((p) => p.id === personaId.value)) return
+    const expectedRole = loginRole === 'teacher' ? 'mentor' : loginRole
+    if (PERSONAS.some((p) => p.id === personaId.value) && data.people.find((p) => p.id === personaId.value)?.role === expectedRole) return
     personaId.value = loginRole === 'student' ? 's1' : loginRole === 'teacher' ? 'm1' : 'a1'
   }
 
@@ -102,6 +103,9 @@ export const usePblStore = defineStore('pbl', () => {
   const canSee = (p: Project) => p.published || canManage(p)
 
   const visibleProjects = computed(() => data.projects.filter(canSee))
+  const favoriteProjects = computed(() =>
+    isStudent.value ? visibleProjects.value.filter((p) => p.interestedIds.includes(personaId.value)) : [],
+  )
   const projectsOf = (programId: string) => visibleProjects.value.filter((p) => p.programId === programId)
   const teamsOf = (pid: string) => data.teams.filter((t) => t.projectId === pid)
   const myTeam = (pid: string) => teamsOf(pid).find((t) => t.memberIds.includes(personaId.value))
@@ -183,6 +187,7 @@ export const usePblStore = defineStore('pbl', () => {
     p.views++
   }
   function toggleInterest(p: Project) {
+    if (!isStudent.value || !canSee(p)) return
     const i = p.interestedIds.indexOf(personaId.value)
     if (i >= 0) p.interestedIds.splice(i, 1)
     else p.interestedIds.push(personaId.value)
@@ -405,7 +410,7 @@ export const usePblStore = defineStore('pbl', () => {
     data, personaId, me, role, isAdmin, isStudent, ensurePersona, reset,
     person, program, project, team, task, canManage, canSee, visibleProjects, projectsOf, teamsOf, myTeam,
     tasksOf, topicsOf, myProjects, milestoneState, currentMilestone, progressPercent, subsOf, latestSub, taskState,
-    resourcesOf, sharedResources, postsOf,
+    resourcesOf, sharedResources, postsOf, favoriteProjects,
     saveProject, setPublished, view, toggleInterest,
     saveTeaming, createTeam, removeTeam, addMember, removeMember, joinTeam, leaveTeam, signup, cancelSignup,
     unassigned, planRandomGroups, applyGroups, startProject, finishProject,

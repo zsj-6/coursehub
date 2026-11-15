@@ -6,7 +6,7 @@ import ProjectCard from '@/components/pbl/ProjectCard.vue'
 import ProjectFormDialog from '@/components/pbl/ProjectFormDialog.vue'
 import type { Program, ProjectStatus } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
-import { PROJECT_STATUS, programCover } from '@/utils/pbl'
+import { PROJECT_STATUS } from '@/utils/pbl'
 
 const store = usePblStore()
 const router = useRouter()
@@ -67,8 +67,8 @@ function saveProgram() {
   <div>
     <section class="hero">
       <div>
-        <h2>从真实项目出发，组队闯关</h2>
-        <p>大项目拆成课题，学生按兴趣报名组队，按关卡推进，指导老师全程评阅。</p>
+        <h1>项目大厅</h1>
+        <p>发现课题，组队实践，推进项目。</p>
       </div>
       <div class="spacer" />
       <div class="nums">
@@ -92,9 +92,9 @@ function saveProgram() {
       </div>
     </div>
     <div class="programs">
-      <router-link v-for="g in programs" :key="g.id" :to="`/pbl/programs/${g.id}`" class="program" :style="programCover(g.color)">
+      <router-link v-for="g in programs" :key="g.id" :to="`/pbl/programs/${g.id}`" class="program">
         <div class="flex">
-          <el-tag size="small" effect="light">{{ g.source }}</el-tag>
+          <span class="source">{{ g.source }}</span>
           <span class="lv">{{ g.level }}</span>
         </div>
         <div class="gt">{{ g.title }}</div>
@@ -124,7 +124,7 @@ function saveProgram() {
     </div>
     <div v-if="!projects.length" class="empty-tip card">没有符合条件的课题</div>
     <transition-group name="grid" tag="div" class="grid">
-      <ProjectCard v-for="p in projects" :key="p.id" :project="p" />
+      <ProjectCard v-for="p in projects" :key="p.id" :project="p" quiet />
     </transition-group>
 
     <ProjectFormDialog ref="formRef" @saved="(id) => router.push(`/pbl/projects/${id}`)" />
@@ -160,23 +160,22 @@ function saveProgram() {
   align-items: center;
   gap: 24px;
   flex-wrap: wrap;
-  padding: 22px 28px;
-  border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(120deg, #2a8c99, #3bb4b8 45%, #5b8ff9);
-  margin-bottom: 20px;
+  padding: 0 0 22px;
+  color: var(--ch-text);
+  border-bottom: 1px solid var(--ch-border);
+  margin-bottom: 22px;
 }
-.hero h2 {
+.hero h1 {
   margin: 0 0 6px;
-  font-size: 22px;
+  font-size: 26px;
 }
 .hero p {
   margin: 0;
-  opacity: 0.9;
+  color: var(--ch-text-2);
 }
 .nums {
   display: flex;
-  gap: 28px;
+  gap: 24px;
 }
 .nums div {
   display: flex;
@@ -184,40 +183,46 @@ function saveProgram() {
   align-items: center;
 }
 .nums b {
-  font-size: 26px;
+  font-size: 22px;
+  font-weight: 600;
 }
 .nums span {
   font-size: 12px;
-  opacity: 0.85;
+  color: var(--ch-text-2);
 }
 .programs {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 14px;
 }
 .program {
-  color: #fff;
-  border-radius: 10px;
-  padding: 16px;
+  color: var(--ch-text);
+  background: #fff;
+  border: 1px solid var(--ch-border);
+  border-radius: 8px;
+  padding: 14px 16px;
   display: grid;
   gap: 6px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
 }
 .program:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.15);
+  border-color: #8fbfc1;
+}
+.source {
+  font-size: 12px;
+  color: #237c81;
 }
 .lv {
   font-size: 12px;
-  opacity: 0.85;
+  color: var(--ch-text-2);
 }
 .gt {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
 }
 .gm {
   font-size: 12px;
-  opacity: 0.9;
+  color: var(--ch-text-2);
 }
 .filters {
   display: flex;

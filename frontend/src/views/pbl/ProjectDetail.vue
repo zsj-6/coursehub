@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BarChart from '@/components/pbl/BarChart.vue'
 import DiscussionBoard from '@/components/pbl/DiscussionBoard.vue'
+import FavoriteButton from '@/components/pbl/FavoriteButton.vue'
 import MilestoneTrack from '@/components/pbl/MilestoneTrack.vue'
 import PersonAvatar from '@/components/pbl/PersonAvatar.vue'
 import PieChart from '@/components/pbl/PieChart.vue'
@@ -151,14 +152,12 @@ const overview = computed(() => ({
           </span>
           <el-tag v-for="t in project.tags" :key="t" size="small" effect="plain" round>{{ t }}</el-tag>
           <span class="muted"><el-icon><View /></el-icon> {{ project.views }} 次浏览</span>
-          <span class="muted"><el-icon><Star /></el-icon> {{ project.interestedIds.length }} 人感兴趣</span>
+          <span class="muted"><el-icon><Star /></el-icon> {{ project.interestedIds.length }} 人收藏</span>
         </div>
       </div>
       <div class="ops">
         <template v-if="store.isStudent">
-          <el-button :type="project.interestedIds.includes(store.personaId) ? 'warning' : 'default'" :icon="project.interestedIds.includes(store.personaId) ? 'StarFilled' : 'Star'" @click="store.toggleInterest(project)">
-            {{ project.interestedIds.includes(store.personaId) ? '已感兴趣' : '感兴趣' }}
-          </el-button>
+          <FavoriteButton :project="project" />
           <el-button v-if="mine && project.status !== 'recruiting'" type="primary" :icon="'Right'" @click="router.push(`/pbl/projects/${project.id}/teams/${mine.id}`)">进入团队空间</el-button>
           <el-button v-else-if="!mine && project.status === 'recruiting'" type="primary" @click="tab = 'teaming'">报名 / 组队</el-button>
         </template>

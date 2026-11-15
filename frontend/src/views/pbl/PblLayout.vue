@@ -2,7 +2,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AppHeader from '@/components/AppHeader.vue'
+import PersonalLayout from '@/layouts/PersonalLayout.vue'
 import PersonAvatar from '@/components/pbl/PersonAvatar.vue'
 import { PERSONAS } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
@@ -49,48 +49,49 @@ async function reset() {
 </script>
 
 <template>
-  <AppHeader />
-  <div class="pbl-bar">
-    <div class="inner">
-      <div class="brand">
-        <el-icon size="20"><Opportunity /></el-icon>
-        <b>项目训练</b>
-        <el-tag size="small" type="warning" effect="dark" round>原型</el-tag>
+  <PersonalLayout>
+    <div class="pbl-bar">
+      <div class="inner">
+        <div class="brand">
+          <el-icon size="20"><Opportunity /></el-icon>
+          <b>项目训练</b>
+          <el-tag size="small" type="warning" effect="dark" round>原型</el-tag>
+        </div>
+        <nav class="tabs">
+          <router-link v-for="t in tabs" :key="t.path" :to="t.path" :class="{ on: active === t.path }">
+            <el-icon><component :is="t.icon" /></el-icon>{{ t.label }}
+          </router-link>
+        </nav>
+        <div class="spacer" />
+        <el-dropdown trigger="click" @command="switchPersona">
+          <span class="persona">
+            <span class="muted">演示视角</span>
+            <PersonAvatar :id="store.personaId" :size="24" />
+            <b>{{ store.me?.name }}</b>
+            <el-icon><ArrowDown /></el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="p in PERSONAS" :key="p.id" :command="p.id" :class="{ cur: p.id === store.personaId }">
+                <div class="pi">
+                  <b>{{ p.label }}</b>
+                  <span class="muted">{{ p.desc }}</span>
+                </div>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-tooltip content="重置演示数据"><el-button circle size="small" :icon="'RefreshLeft'" @click="reset" /></el-tooltip>
       </div>
-      <nav class="tabs">
-        <router-link v-for="t in tabs" :key="t.path" :to="t.path" :class="{ on: active === t.path }">
-          <el-icon><component :is="t.icon" /></el-icon>{{ t.label }}
-        </router-link>
-      </nav>
-      <div class="spacer" />
-      <el-dropdown trigger="click" @command="switchPersona">
-        <span class="persona">
-          <span class="muted">演示视角</span>
-          <PersonAvatar :id="store.personaId" :size="24" />
-          <b>{{ store.me?.name }}</b>
-          <el-icon><ArrowDown /></el-icon>
-        </span>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item v-for="p in PERSONAS" :key="p.id" :command="p.id" :class="{ cur: p.id === store.personaId }">
-              <div class="pi">
-                <b>{{ p.label }}</b>
-                <span class="muted">{{ p.desc }}</span>
-              </div>
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-      <el-tooltip content="重置演示数据"><el-button circle size="small" :icon="'RefreshLeft'" @click="reset" /></el-tooltip>
     </div>
-  </div>
-  <main class="pbl-main">
-    <router-view v-slot="{ Component }">
-      <transition name="page" mode="out-in">
-        <component :is="Component" :key="`${route.path}|${store.personaId}`" />
-      </transition>
-    </router-view>
-  </main>
+    <main class="pbl-main">
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" :key="`${route.path}|${store.personaId}`" />
+        </transition>
+      </router-view>
+    </main>
+  </PersonalLayout>
 </template>
 
 <style scoped>
@@ -108,7 +109,7 @@ async function reset() {
   height: 48px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
 }
 .brand {
   display: flex;
@@ -160,7 +161,7 @@ async function reset() {
 .pbl-main {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 20px 24px 40px;
+  padding: 24px 0 0;
 }
 .page-enter-active,
 .page-leave-active {
