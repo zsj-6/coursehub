@@ -6,6 +6,10 @@ import UnitGraph from '@/components/ai/UnitGraph.vue'
 import UnitLevels from '@/components/ai/UnitLevels.vue'
 import UnitProjects from '@/components/ai/UnitProjects.vue'
 import UnitResources from '@/components/ai/UnitResources.vue'
+import UnitExperiment from '@/components/ai/UnitExperiment.vue'
+import UnitPractice from '@/components/ai/UnitPractice.vue'
+import UnitProjectLib from '@/components/ai/UnitProjectLib.vue'
+import UnitTrain from '@/components/ai/UnitTrain.vue'
 import { CATEGORIES } from '@/mock/ai'
 import { masteryLevel, useAiStore } from '@/stores/ai'
 import { toneVars } from '@/utils/format'
@@ -96,12 +100,21 @@ const idx = computed(() => ai.units.findIndex((u) => u.id === props.unitId))
       <el-tab-pane label="知识图谱" name="graph" />
       <el-tab-pane label="学习资源" name="resources" />
       <el-tab-pane label="闯关" name="levels" />
-      <el-tab-pane v-if="ai.projectLinksOf(unit.id).length" label="项目训练" name="projects" />
+      <el-tab-pane label="AI 训练" name="train" />
+      <el-tab-pane label="实验训练" name="experiment" />
+      <el-tab-pane label="线下活动" name="practice" />
+      <el-tab-pane label="项目训练" name="projects" />
     </el-tabs>
     <UnitGraph v-if="tab === 'graph'" :unit="unit" />
     <UnitResources v-else-if="tab === 'resources'" :unit="unit" />
     <UnitLevels v-else-if="tab === 'levels'" :unit="unit" />
-    <UnitProjects v-else-if="tab === 'projects'" :unit="unit" />
+    <UnitTrain v-else-if="tab === 'train'" :unit="unit" />
+    <UnitExperiment v-else-if="tab === 'experiment'" :unit="unit" />
+    <UnitPractice v-else-if="tab === 'practice'" :unit="unit" />
+    <template v-else-if="tab === 'projects'">
+      <UnitProjects v-if="ai.projectLinksOf(unit.id).length" :unit="unit" />
+      <UnitProjectLib :unit="unit" />
+    </template>
   </div>
 </template>
 

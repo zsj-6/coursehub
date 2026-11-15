@@ -2,13 +2,25 @@
 /**
  * 能力成长（领导版"能力成长"列表 + "成长画像"收敛成的学习画像 + "今日推荐"改成的为你推荐）
  */
+import { ElMessage } from 'element-plus'
 import { computed, ref } from 'vue'
 import RateBars from '@/components/charts/RateBars.vue'
 import { CATEGORIES, type Unit, type UnitCategory } from '@/mock/ai'
 import { masteryLevel, useAiStore } from '@/stores/ai'
+import { useGrowthStore } from '@/stores/growth'
 import { toneVars } from '@/utils/format'
 
 const ai = useAiStore()
+const growth = useGrowthStore()
+const suggestOpen = ref(false)
+const suggestText = ref('')
+function submitSuggest() {
+  if (!suggestText.value.trim()) return ElMessage.warning('写一下你想新增的能力')
+  growth.push(growth.pid, '【反馈已收到】建议新增能力', `你建议新增「${suggestText.value.trim()}」，我们会整理后反馈给课程组。`)
+  ElMessage.success('感谢反馈，已记录你的需求')
+  suggestOpen.value = false
+  suggestText.value = ''
+}
 const cat = ref<'all' | UnitCategory>('all')
 const kw = ref('')
 
@@ -174,6 +186,16 @@ const unconfirmedClusters = computed(() => ai.errorReports.filter((r) => !ai.sta
         </div>
       </router-link>
     </div>
+    <div class="suggest muted">
+      没有找到想要的能力？<a href="#" @click.prevent="suggestOpen = true">点此反馈，建议新增能力 →</a>
+    </div>
+    <el-dialog v-model="suggestOpen" title="建议新增能力" width="440px">
+      <el-input v-model="suggestText" placeholder="例如：嵌入式系统开发、学术英语写作" />
+      <template #footer>
+        <el-button @click="suggestOpen = false">取消</el-button>
+        <el-button type="primary" @click="submitSuggest">提交</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -312,6 +334,10 @@ const unconfirmedClusters = computed(() => ai.errorReports.filter((r) => !ai.sta
 }
 .building {
   color: var(--ch-text-3);
+}
+.suggest {
+  margin-top: 20px;
+  text-align: center;
 }
 @media (max-width: 900px) {
   .grid2 {

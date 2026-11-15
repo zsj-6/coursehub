@@ -5,7 +5,7 @@
  */
 import dayjs from 'dayjs'
 
-export type PersonRole = 'admin' | 'mentor' | 'student'
+export type PersonRole = 'admin' | 'mentor' | 'ta' | 'student'
 export type ProjectStatus = 'draft' | 'recruiting' | 'running' | 'finished'
 export type TeamingMode = 'free' | 'random'
 export type ShareScope = 'team' | 'project' | 'school'
@@ -168,7 +168,7 @@ export interface PblData {
   posts: Post[]
 }
 
-export const DATA_VERSION = 1
+export const DATA_VERSION = 2
 
 const at = (days: number, hour = 10, minute = 0) =>
   dayjs().add(days, 'day').hour(hour).minute(minute).second(0).millisecond(0).toISOString()
@@ -184,6 +184,7 @@ const MAJORS = ['自动化', '机械工程', '计算机科学与技术', '电子
 export function createSeed(): PblData {
   const people: Person[] = [
     { id: 'a1', name: '刘晓峰', role: 'admin', college: '机电工程学院', title: '学院教学管理员' },
+    { id: 'ta1', name: '王一帆', role: 'ta', college: '机电工程学院', title: '研究生助教' },
     {
       id: 'm1', name: '李振华', role: 'mentor', college: '机电工程学院', title: '副教授',
       bio: '研究方向：机器视觉、嵌入式系统。指导机器人梯队视觉组多年。',
@@ -435,6 +436,7 @@ export function createSeed(): PblData {
 /** 演示视角：一个人就能切换不同角色演示整条流程。 */
 export const PERSONAS: { id: string; label: string; desc: string }[] = [
   { id: 'a1', label: '学院管理员 · 刘晓峰', desc: '建项目、拆课题、设关卡、发布、组队调剂、看统计' },
+  { id: 'ta1', label: '助教 · 王一帆', desc: '协助批改、审核报名和预约、查看学情；不能发布和审核图谱' },
   { id: 'm1', label: '指导教师 · 李振华', desc: '指导"视觉识别与自动瞄准"等课题：布置任务、评阅、评价' },
   { id: 's1', label: '学生 · 陈子轩（已组队）', desc: '灵眸队组长：提交任务、上传资料、参与讨论' },
   { id: 's20', label: '学生 · 谢可馨（找项目中）', desc: '浏览项目、标记感兴趣、报名、加入团队' },

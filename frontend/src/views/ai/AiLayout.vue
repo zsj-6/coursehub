@@ -7,19 +7,26 @@ import PersonAvatar from '@/components/pbl/PersonAvatar.vue'
 import PersonalLayout from '@/layouts/PersonalLayout.vue'
 import { PERSONAS } from '@/mock/pbl'
 import { useAiStore } from '@/stores/ai'
+import { useGrowthStore } from '@/stores/growth'
 import { usePblStore } from '@/stores/pbl'
 import { useUserStore } from '@/stores/user'
 import { ROLE_LABEL } from '@/utils/format'
 
 const pbl = usePblStore()
 const ai = useAiStore()
+const growth = useGrowthStore()
 const user = useUserStore()
 const route = useRoute()
 const router = useRouter()
 pbl.ensurePersona(user.user?.role)
-// 视角会按登录角色重置；学生视角不能停在 AI 助教 / AI 办学
-const teacherOnly = (p: string) => p.startsWith('/units/desk') || p.startsWith('/insight')
-if (pbl.isStudent && teacherOnly(route.path)) router.replace('/units')
+// 视角会按登录角色重置；没有权限的页面回到能力成长
+const allowed = (p: string) => {
+  if (p.startsWith('/units/desk')) return !pbl.isStudent
+  if (p.startsWith('/insight')) return pbl.role === 'mentor' || pbl.role === 'admin'
+  if (p.startsWith('/units/today') || p.startsWith('/units/growth')) return pbl.isStudent
+  return true
+}
+if (!allowed(route.path)) router.replace('/units')
 
 // 和项目训练一样，左侧个人栏显示当前演示身份
 const demoProfile = computed(() => ({
@@ -27,27 +34,34 @@ const demoProfile = computed(() => ({
   role: pbl.role === 'mentor' ? '指导教师' : ROLE_LABEL[pbl.role],
 }))
 
-const tabs = computed(() => {
-  const t = [{ path: '/units', label: '能力成长', icon: 'Aim' }]
-  if (!pbl.isStudent) t.push({ path: '/units/desk', label: 'AI 助教', icon: 'Monitor' })
-  if (!pbl.isStudent) t.push({ path: '/insight', label: 'AI 办学', icon: 'DataAnalysis' })
-  return t
-})
+/** 与领导版的 6 个菜单对齐；教师 / 助教另有 AI 助教，教师 / 管理员另有 AI 办学 */
+const ALL_TABS = [
+  { path: '/units/today', label: '今日推荐', icon: 'Sunrise' },
+  { path: '/units', label: '能力成长', icon: 'Aim' },
+  { path: '/units/desk', label: 'AI 助教', icon: 'Monitor' },
+  { path: '/insight', label: 'AI 办学', icon: 'DataAnalysis' },
+  { path: '/units/tutor', label: 'AI 导师', icon: 'ChatDotRound' },
+  { path: '/units/agents', label: '智能体广场', icon: 'Grid' },
+  { path: '/units/growth', label: '成长画像', icon: 'TrendCharts' },
+  { path: '/units/mine', label: '我的', icon: 'User' },
+]
+const tabs = computed(() => ALL_TABS.filter((t) => allowed(t.path)))
+const unread = computed(() => growth.myMessages.filter((m) => m.status === 'UNREAD').length)
 const active = computed(() => {
-  if (route.path.startsWith('/insight')) return '/insight'
-  if (route.path.startsWith('/units/desk')) return '/units/desk'
-  return '/units'
+  const hit = ALL_TABS.filter((t) => t.path !== '/units').find((t) => route.path.startsWith(t.path))
+  return hit ? hit.path : '/units'
 })
 
 function switchPersona(id: string) {
   pbl.personaId = id
   const p = PERSONAS.find((x) => x.id === id)
   ElMessage.success(`已切换到「${p?.label}」视角`)
-  if (pbl.isStudent && teacherOnly(route.path)) router.push('/units')
+  if (!allowed(route.path)) router.push('/units')
 }
 async function reset() {
   await ElMessageBox.confirm('恢复到初始演示数据？作答记录、审核结果等修改会被清掉。', '重置演示数据', { type: 'warning' })
   ai.reset()
+  growth.reset()
   ElMessage.success('已重置')
 }
 </script>
@@ -59,6 +73,7 @@ async function reset() {
       <nav class="tabs">
         <router-link v-for="t in tabs" :key="t.path" :to="t.path" :class="{ on: active === t.path }">
           <el-icon><component :is="t.icon" /></el-icon>{{ t.label }}
+          <span v-if="t.path === '/units/mine' && unread" class="dot">{{ unread }}</span>
         </router-link>
       </nav>
       <div class="spacer" />
@@ -91,7 +106,7 @@ async function reset() {
     </router-view>
   </main>
 
-  <button v-if="pbl.isStudent && !ai.tutorBlocked && !ai.tutorOpen && route.name !== 'ai-read'" class="tutor-fab" @click="ai.openTutor({})">
+  <button v-if="pbl.isStudent && !ai.tutorBlocked && !ai.tutorOpen && route.name !== 'ai-read' && route.name !== 'ai-tutor'" class="tutor-fab" @click="ai.openTutor({})">
     <el-icon><ChatDotRound /></el-icon>
     <span>AI 辅学</span>
   </button>
@@ -125,9 +140,20 @@ async function reset() {
 }
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   height: 100%;
   margin-left: -4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs a {
+  white-space: nowrap;
+}
+@media (max-width: 1500px) {
+  .proto {
+    display: none;
+  }
 }
 .tabs a {
   position: relative;
@@ -143,6 +169,17 @@ async function reset() {
 }
 .tabs a.on {
   font-weight: 600;
+}
+.dot {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--ch-danger);
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
 }
 .tabs a.on::after {
   content: '';

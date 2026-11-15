@@ -233,11 +233,11 @@ const LV: QLevel[] = ['basic', 'standard', 'challenge']
             <QuestionCard :q="q" mode="test" :revealed="true" :model-value="q.answer" />
             <div class="pq-actions">
               <template v-if="q.ai">
-                <template v-if="!ai.state.questionReview[q.id]">
+                <template v-if="!ai.state.questionReview[q.id] && ai.canPublish">
                   <el-button size="small" type="primary" @click="decide(q.id, 'adopted')">采纳入库</el-button>
                   <el-button size="small" @click="decide(q.id, 'rejected')">弃用</el-button>
                 </template>
-                <span v-else :class="ai.state.questionReview[q.id] === 'adopted' ? 'ok' : 'muted'">{{ ai.state.questionReview[q.id] === 'adopted' ? '已采纳' : '已弃用' }}</span>
+                <span v-else :class="ai.state.questionReview[q.id] === 'adopted' ? 'ok' : 'muted'">{{ !ai.state.questionReview[q.id] ? '待教师采纳' : ai.state.questionReview[q.id] === 'adopted' ? '已采纳' : '已弃用' }}</span>
               </template>
               <span v-else class="muted">题库已有</span>
             </div>
@@ -256,7 +256,8 @@ const LV: QLevel[] = ['basic', 'standard', 'challenge']
             <span class="muted">{{ ai.unitOfNode(n.id)?.name }} · 出处：{{ n.aiSource }}</span>
             <span>{{ n.desc }}</span>
           </div>
-          <template v-if="ai.nodeStatus(n) === 'ai'">
+          <span v-if="ai.nodeStatus(n) === 'ai' && !ai.canPublish" class="muted">待教师审核</span>
+          <template v-else-if="ai.nodeStatus(n) === 'ai'">
             <el-button size="small" type="primary" @click="review(n.id, 'confirmed')">采纳</el-button>
             <el-button size="small" @click="review(n.id, 'rejected')">驳回</el-button>
           </template>

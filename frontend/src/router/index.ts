@@ -105,6 +105,11 @@ const router = createRouter({
       children: [
         { path: '', name: 'ai-units', component: () => import('@/views/ai/UnitList.vue') },
         { path: 'desk', name: 'ai-desk', component: () => import('@/views/ai/TeacherDesk.vue') },
+        { path: 'today', name: 'ai-today', component: () => import('@/views/ai/Today.vue') },
+        { path: 'tutor', name: 'ai-tutor', component: () => import('@/views/ai/Tutor.vue') },
+        { path: 'agents', name: 'ai-agents', component: () => import('@/views/ai/Agents.vue') },
+        { path: 'growth', name: 'ai-growth', component: () => import('@/views/ai/Growth.vue') },
+        { path: 'mine', name: 'ai-mine', component: () => import('@/views/ai/Mine.vue') },
         { path: ':unitId', name: 'ai-unit', component: () => import('@/views/ai/UnitDetail.vue'), props: true },
         { path: ':unitId/read/:resId', name: 'ai-read', component: () => import('@/views/ai/Reader.vue'), props: true },
         { path: ':unitId/levels/:levelId', name: 'ai-level', component: () => import('@/views/ai/LevelRun.vue'), props: true },

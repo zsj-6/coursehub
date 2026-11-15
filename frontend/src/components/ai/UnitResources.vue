@@ -79,7 +79,8 @@ function adopt(id: string) {
             <span class="note">{{ AI_TAG_SUGGESTIONS[r.id].note }}</span>
             <span class="tags">建议关联：<el-tag v-for="id in AI_TAG_SUGGESTIONS[r.id].nodeIds" :key="id" size="small" type="info">{{ ai.node(id)?.name }}</el-tag></span>
           </div>
-          <el-button size="small" type="primary" @click="adopt(r.id)">采纳</el-button>
+          <el-button v-if="ai.canPublish" size="small" type="primary" @click="adopt(r.id)">采纳</el-button>
+          <span v-else class="muted">待教师采纳</span>
         </div>
       </section>
     </div>

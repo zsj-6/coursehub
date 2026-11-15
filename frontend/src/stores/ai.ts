@@ -158,6 +158,8 @@ export const useAiStore = defineStore('ai', () => {
 
   const personaId = computed(() => pbl.personaId)
   const isStudent = computed(() => pbl.isStudent)
+  /** 只有指导教师和管理员能采纳 AI 生成的知识点、题目、资源标签；助教只读 */
+  const canPublish = computed(() => pbl.role === 'mentor' || pbl.role === 'admin')
 
   // ------------------------------------------------------------ 基础查询
   const unitMap = new Map(UNITS.map((u) => [u.id, u]))
@@ -477,11 +479,50 @@ export const useAiStore = defineStore('ai', () => {
       }
     }
 
+    const byExpert = expertScript(expertId, s)
+    if (byExpert) return byExpert
+
     return {
       text: '资料库里没有找到和这个问题直接相关的内容，我不想凭空编一个答案给你。\n\n可以换个说法（比如带上知识点的名字），或者到课程讨论区问老师。这个问题已经记下来，老师审核时能看到。',
       sources: [],
       noSource: true,
     }
+  }
+
+  /** 职业 / 升学 / 综合素养等导师：没有对应知识点时，按问题类型给引导式回答（领导版 AI 导师） */
+  function expertScript(expertId: string, s: string): Reply | null {
+    const e = expertId.toLowerCase()
+    if (e === 'career' || /简历|面试|岗位|实习|求职|就业/.test(s))
+      return {
+        text: '先别急着改简历，我们把方向理清楚：\n1. 你想投的岗位是什么？把岗位要求里出现最多的 3 项能力写下来。\n2. 对照你的项目经历，每项能力找一个能证明它的具体例子（做了什么、结果是多少）。\n3. 缺的那一项，看看「能力成长」里有没有对应的能力单元可以补。\n\n先发给我第 1 步的答案。岗位和招聘信息以学校就业指导中心发布的为准。',
+        sources: [],
+      }
+    if (e === 'graduate' || /保研|考研|留学|推免|夏令营/.test(s))
+      return {
+        text: '升学规划我建议分三步想：\n1. 目标：保研、考研还是出国？各自最晚的决策时间点是什么时候？\n2. 差距：对照目标院校往年的要求（绩点排名、科研 / 竞赛经历、英语），列出你现在缺什么。\n3. 计划：把缺的部分排进每个学期。\n\n你现在更倾向哪条路？具体政策以学校研究生院和教务处发布的为准。',
+        sources: [],
+      }
+    if (e === 'general' || /演讲|沟通|表达|时间管理|拖延/.test(s))
+      return {
+        text: '这类能力最有效的办法是"小步练习 + 及时反馈"。给你一个本周就能做的练习：\n· 选一个你熟悉的知识点，用 3 分钟讲给同学听，录下来；\n· 回听时只记录两件事：哪里卡住了、哪里听众皱眉了；\n· 下次只改其中一处。\n\n想先练表达还是时间管理？',
+        sources: [],
+      }
+    return null
+  }
+
+  /** 多导师协同：其他导师从各自角度补充一句 */
+  function expertSupplement(expertId: string, topic?: string): string {
+    const t = topic ? `「${topic}」` : '这个问题'
+    const map: Record<string, string> = {
+      academic: `从学习方法看，${t}建议先把定义和一个最简单的例子吃透，再做题。`,
+      contest: `从比赛实践看，${t}在机甲大师里最容易出问题的地方是现场调试，建议提前准备排障清单。`,
+      research: `从科研角度看，可以找 1~2 篇和${t}相关的论文，重点读实验设计部分。`,
+      innovation: `从项目角度看，${t}可以拆成一个两周能做完的小目标，作为大创的起步。`,
+      career: `从就业角度看，${t}对应的能力在相关岗位的面试里经常被问到，可以准备一个自己的实例。`,
+      graduate: `从升学角度看，${t}相关的项目经历在推免面试里是加分项，记得留好过程材料。`,
+      general: `从表达角度看，试着把${t}用 3 句话讲给不懂的人听，能讲清楚才是真的懂了。`,
+    }
+    return map[expertId.toLowerCase()] ?? `关于${t}，我同意上面的分析。`
   }
   /** 项目教练：按当前关卡、截止时间、所需节点和团队掌握情况给 3 条建议 */
   function projectCoach(projectId: string, teamId?: string): Reply | null {
@@ -595,6 +636,7 @@ export const useAiStore = defineStore('ai', () => {
     state,
     personaId,
     isStudent,
+    canPublish,
     units: UNITS,
     experts: EXPERTS,
     unit,
@@ -637,6 +679,7 @@ export const useAiStore = defineStore('ai', () => {
     tutorBlocked,
     openTutor,
     reply,
+    expertSupplement,
     feynman,
     logAsk,
     myAsks,

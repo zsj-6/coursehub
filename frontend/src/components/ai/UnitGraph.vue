@@ -134,7 +134,7 @@ onBeforeUnmount(() => clearInterval(timer))
             <el-option v-for="n in targets" :key="n.id" :value="n.id" :label="n.name" />
           </el-select>
         </template>
-        <template v-else>
+        <template v-else-if="ai.canPublish">
           <el-button size="small" :icon="'MagicStick'" @click="generate">演示：AI 从资料生成图谱</el-button>
           <span v-if="genMsg" class="gen-msg">{{ genMsg }}</span>
         </template>
@@ -178,7 +178,7 @@ onBeforeUnmount(() => clearInterval(timer))
       <div v-if="isPending" class="ai-box">
         <div><el-tag size="small" type="warning">AI 建议</el-tag> 从资料中抽取的新知识点，学生还看不到</div>
         <div class="muted">出处：{{ node.aiSource }}</div>
-        <div v-if="!ai.isStudent" class="ai-actions">
+        <div v-if="ai.canPublish" class="ai-actions">
           <el-button size="small" type="primary" @click="review('confirmed')">采纳</el-button>
           <el-button size="small" @click="review('rejected')">驳回</el-button>
         </div>
