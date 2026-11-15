@@ -98,6 +98,23 @@ const router = createRouter({
         },
       ],
     },
+    // AI 原型：能力成长、知识图谱、闯关、AI 辅学、AI 助教、AI 办学（纯前端，数据见 src/mock/ai.ts）
+    {
+      path: '/units',
+      component: () => import('@/views/ai/AiLayout.vue'),
+      children: [
+        { path: '', name: 'ai-units', component: () => import('@/views/ai/UnitList.vue') },
+        { path: 'desk', name: 'ai-desk', component: () => import('@/views/ai/TeacherDesk.vue') },
+        { path: ':unitId', name: 'ai-unit', component: () => import('@/views/ai/UnitDetail.vue'), props: true },
+        { path: ':unitId/read/:resId', name: 'ai-read', component: () => import('@/views/ai/Reader.vue'), props: true },
+        { path: ':unitId/levels/:levelId', name: 'ai-level', component: () => import('@/views/ai/LevelRun.vue'), props: true },
+      ],
+    },
+    {
+      path: '/insight',
+      component: () => import('@/views/ai/AiLayout.vue'),
+      children: [{ path: '', name: 'ai-insight', component: () => import('@/views/ai/Insight.vue') }],
+    },
     // 全屏页面（不带课程菜单）
     {
       path: '/courses/:courseId(\\d+)/activities/:activityId(\\d+)/grade',

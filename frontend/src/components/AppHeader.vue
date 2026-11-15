@@ -27,6 +27,7 @@ function onCommand(cmd: string) {
       <router-link to="/" exact-active-class="active">首页</router-link>
       <router-link to="/courses" active-class="active">我的课程</router-link>
       <router-link to="/pbl" active-class="active">项目训练</router-link>
+      <router-link to="/units" :class="{ active: $route.path.startsWith('/units') || $route.path.startsWith('/insight') }">能力成长</router-link>
       <router-link v-if="store.isAdmin" to="/admin/users" active-class="active">用户管理</router-link>
     </nav>
     <div class="spacer" />
