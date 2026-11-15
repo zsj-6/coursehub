@@ -1,43 +1,58 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ProjectCard from '@/components/pbl/ProjectCard.vue'
 import type { Project } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
 import { fmt, fromNow } from '@/utils/format'
 
 const store = usePblStore()
-const status = ref<'all' | 'notstarted' | 'running' | 'finished' | 'fav'>('all')
-const favProjects = computed(() => store.myFavoriteIds.map((id) => store.project(id)).filter((p) => p && store.canSee(p)) as Project[])
+const route = useRoute()
+const router = useRouter()
+const tab = computed({
+  get: () => store.isStudent && route.query.tab === 'favorites' ? 'favorites' : 'participating',
+  set: (value: string) => {
+    status.value = 'all'
+    router.replace({ query: { ...route.query, tab: value } })
+  },
+})
+const source = computed(() => tab.value === 'favorites' ? store.favoriteProjects : store.myProjects)
+const status = ref<'all' | 'notstarted' | 'running' | 'finished'>('all')
 const list = computed(() =>
-  status.value === 'fav' ? favProjects.value : store.myProjects.filter((p) => {
+  source.value.filter((p) => {
     if (status.value === 'notstarted') return p.status === 'recruiting' || p.status === 'draft'
     if (status.value === 'running') return p.status === 'running'
     if (status.value === 'finished') return p.status === 'finished'
     return true
   }),
 )
-const count = (s: string[]) => store.myProjects.filter((p) => s.includes(p.status)).length
-const KIND_COLOR: Record<string, string> = { 待提交: 'var(--ch-warning)', 待参与讨论: 'var(--ch-blue)', 待评阅: 'var(--ch-primary)', 关卡即将截止: 'var(--ch-danger)' }
+const count = (s: string[]) => source.value.filter((p) => s.includes(p.status)).length
+const KIND_COLOR: Record<string, string> = { 待提交: '#f6903d', 待参与讨论: '#5b8ff9', 待评阅: '#3bb4b8', 关卡即将截止: '#e8684a' }
 const urgent = (t: string) => dayjs(t).diff(dayjs(), 'hour') < 48
 </script>
 
 <template>
   <div class="mine">
     <section>
-      <div class="stat-strip">
-        <div class="stat" :class="{ on: status === 'all' }" @click="status = 'all'"><div class="stat-label">全部</div><div class="stat-value">{{ store.myProjects.length }}<small>个</small></div></div>
-        <div class="stat" :class="{ on: status === 'notstarted' }" @click="status = 'notstarted'"><div class="stat-label">未开始</div><div class="stat-value">{{ count(['recruiting', 'draft']) }}<small>个</small></div></div>
-        <div class="stat" :class="{ on: status === 'running' }" @click="status = 'running'"><div class="stat-label">进行中</div><div class="stat-value">{{ count(['running']) }}<small>个</small></div></div>
-        <div class="stat" :class="{ on: status === 'finished' }" @click="status = 'finished'"><div class="stat-label">已结束</div><div class="stat-value">{{ count(['finished']) }}<small>个</small></div></div>
-        <div class="stat" :class="{ on: status === 'fav' }" @click="status = 'fav'"><div class="stat-label">我的收藏</div><div class="stat-value">{{ favProjects.length }}<small>个</small></div></div>
+      <el-tabs v-if="store.isStudent" v-model="tab">
+        <el-tab-pane :label="`我参与的 ${store.myProjects.length}`" name="participating" />
+        <el-tab-pane :label="`我的收藏 ${store.favoriteProjects.length}`" name="favorites" />
+      </el-tabs>
+      <div class="stats">
+        <div class="stat" :class="{ on: status === 'all' }" @click="status = 'all'"><b>{{ source.length }}</b><span>全部</span></div>
+        <div class="stat" :class="{ on: status === 'notstarted' }" @click="status = 'notstarted'"><b>{{ count(['recruiting', 'draft']) }}</b><span>未开始</span></div>
+        <div class="stat" :class="{ on: status === 'running' }" @click="status = 'running'"><b>{{ count(['running']) }}</b><span>进行中</span></div>
+        <div class="stat" :class="{ on: status === 'finished' }" @click="status = 'finished'"><b>{{ count(['finished']) }}</b><span>已结束</span></div>
       </div>
       <div v-if="!list.length" class="empty-tip card">
-        {{ status === 'fav' ? '还没有收藏课题，在项目大厅点课题卡片右上角的 ☆ 即可收藏' : store.isStudent ? '还没有参与项目，去项目大厅看看感兴趣的课题吧' : '没有项目' }}
+        <template v-if="status !== 'all'">该状态下暂无项目</template>
+        <template v-else-if="tab === 'favorites'">还没有收藏项目，去项目大厅收藏感兴趣的课题吧</template>
+        <template v-else>{{ store.isStudent ? '还没有参与项目，去项目大厅看看感兴趣的课题吧' : '没有项目' }}</template>
         <div style="margin-top: 10px"><el-button type="primary" @click="$router.push('/pbl')">去项目大厅</el-button></div>
       </div>
       <div class="grid">
-        <ProjectCard v-for="p in list" :key="p.id" :project="p" />
+        <ProjectCard v-for="p in list" :key="p.id" :project="p" :quiet="tab === 'favorites'" />
       </div>
     </section>
     <aside class="card todo">

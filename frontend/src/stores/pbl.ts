@@ -24,7 +24,6 @@ import {
 
 const DATA_KEY = 'coursehub_pbl_data'
 const PERSONA_KEY = 'coursehub_pbl_persona'
-const FAV_KEY = 'coursehub_pbl_favorites'
 
 function loadData(): PblData {
   try {
@@ -37,17 +36,6 @@ function loadData(): PblData {
     /* localStorage 不可用或数据损坏时用初始数据 */
   }
   return createSeed()
-}
-
-/** 收藏：{ 演示视角 id: 课题 id[] }。和演示数据分开存，改版演示数据时不会丢。 */
-function loadFavorites(): Record<string, string[]> {
-  try {
-    const raw = localStorage.getItem(FAV_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {
-    /* ignore */
-  }
-  return {}
 }
 
 function readPersona(): string | null {
@@ -67,7 +55,6 @@ export type MilestoneState = 'done' | 'current' | 'upcoming'
 export const usePblStore = defineStore('pbl', () => {
   const data = reactive<PblData>(loadData())
   const personaId = ref<string>(readPersona() || '')
-  const favorites = reactive<Record<string, string[]>>(loadFavorites())
 
   watch(
     data,
@@ -76,17 +63,6 @@ export const usePblStore = defineStore('pbl', () => {
         localStorage.setItem(DATA_KEY, JSON.stringify(v))
       } catch {
         /* 存不了就只保留在内存里 */
-      }
-    },
-    { deep: true },
-  )
-  watch(
-    favorites,
-    (v) => {
-      try {
-        localStorage.setItem(FAV_KEY, JSON.stringify(v))
-      } catch {
-        /* ignore */
       }
     },
     { deep: true },
@@ -101,25 +77,15 @@ export const usePblStore = defineStore('pbl', () => {
 
   /** 首次进入时按登录角色选一个默认视角。 */
   function ensurePersona(loginRole: string | undefined) {
-    if (PERSONAS.some((p) => p.id === personaId.value)) return
+    const expectedRole = loginRole === 'teacher' ? 'mentor' : loginRole
+    if (PERSONAS.some((p) => p.id === personaId.value) && data.people.find((p) => p.id === personaId.value)?.role === expectedRole) return
     personaId.value = loginRole === 'student' ? 's1' : loginRole === 'teacher' ? 'm1' : 'a1'
   }
 
   function reset() {
     Object.assign(data, createSeed())
-    for (const k of Object.keys(favorites)) delete favorites[k]
   }
 
-  const myFavoriteIds = computed(() => favorites[personaId.value] ?? [])
-  const isFavorite = (pid: string) => myFavoriteIds.value.includes(pid)
-  /** 收藏 / 取消收藏，返回操作后是否已收藏。 */
-  function toggleFavorite(pid: string) {
-    const list = (favorites[personaId.value] ??= [])
-    const i = list.indexOf(pid)
-    if (i >= 0) list.splice(i, 1)
-    else list.unshift(pid)
-    return i < 0
-  }
 
   // ---------- 查询 ----------
   const personMap = computed(() => new Map(data.people.map((p) => [p.id, p])))
@@ -138,6 +104,9 @@ export const usePblStore = defineStore('pbl', () => {
   const canSee = (p: Project) => p.published || canManage(p)
 
   const visibleProjects = computed(() => data.projects.filter(canSee))
+  const favoriteProjects = computed(() =>
+    isStudent.value ? visibleProjects.value.filter((p) => p.interestedIds.includes(personaId.value)) : [],
+  )
   const projectsOf = (programId: string) => visibleProjects.value.filter((p) => p.programId === programId)
   const teamsOf = (pid: string) => data.teams.filter((t) => t.projectId === pid)
   const myTeam = (pid: string) => teamsOf(pid).find((t) => t.memberIds.includes(personaId.value))
@@ -219,6 +188,7 @@ export const usePblStore = defineStore('pbl', () => {
     p.views++
   }
   function toggleInterest(p: Project) {
+    if (!isStudent.value || !canSee(p)) return
     const i = p.interestedIds.indexOf(personaId.value)
     if (i >= 0) p.interestedIds.splice(i, 1)
     else p.interestedIds.push(personaId.value)
@@ -441,8 +411,8 @@ export const usePblStore = defineStore('pbl', () => {
     data, personaId, me, role, isAdmin, isStudent, ensurePersona, reset,
     person, program, project, team, task, canManage, canSee, visibleProjects, projectsOf, teamsOf, myTeam,
     tasksOf, topicsOf, myProjects, milestoneState, currentMilestone, progressPercent, subsOf, latestSub, taskState,
-    resourcesOf, sharedResources, postsOf,
-    saveProject, setPublished, view, toggleInterest, myFavoriteIds, isFavorite, toggleFavorite,
+    resourcesOf, sharedResources, postsOf, favoriteProjects,
+    saveProject, setPublished, view, toggleInterest,
     saveTeaming, createTeam, removeTeam, addMember, removeMember, joinTeam, leaveTeam, signup, cancelSignup,
     unassigned, planRandomGroups, applyGroups, startProject, finishProject,
     saveTask, removeTask, submitTask, grade, toggleRecommend, urge, recommended,

@@ -108,12 +108,9 @@ const router = createRouter({
         { path: ':unitId', name: 'ai-unit', component: () => import('@/views/ai/UnitDetail.vue'), props: true },
         { path: ':unitId/read/:resId', name: 'ai-read', component: () => import('@/views/ai/Reader.vue'), props: true },
         { path: ':unitId/levels/:levelId', name: 'ai-level', component: () => import('@/views/ai/LevelRun.vue'), props: true },
+        // 绝对路径挂在同一个布局下：在 /units 和 /insight 之间切换不会重新挂载布局，演示视角不会被重置
+        { path: '/insight', name: 'ai-insight', component: () => import('@/views/ai/Insight.vue') },
       ],
-    },
-    {
-      path: '/insight',
-      component: () => import('@/views/ai/AiLayout.vue'),
-      children: [{ path: '', name: 'ai-insight', component: () => import('@/views/ai/Insight.vue') }],
     },
     // 全屏页面（不带课程菜单）
     {

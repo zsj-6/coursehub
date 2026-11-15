@@ -1,17 +1,9 @@
 <script setup lang="ts">
-import AppHeader from '@/components/AppHeader.vue'
+import PersonalLayout from '@/layouts/PersonalLayout.vue'
 </script>
 
 <template>
-  <AppHeader />
-  <main class="main page-container">
-    <router-view />
-  </main>
+  <PersonalLayout>
+    <main><router-view /></main>
+  </PersonalLayout>
 </template>
-
-<style scoped>
-.main {
-  padding-top: 24px;
-  padding-bottom: 48px;
-}
-</style>

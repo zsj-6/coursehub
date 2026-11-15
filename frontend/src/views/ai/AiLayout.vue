@@ -2,13 +2,14 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AppHeader from '@/components/AppHeader.vue'
 import TutorDrawer from '@/components/ai/TutorDrawer.vue'
 import PersonAvatar from '@/components/pbl/PersonAvatar.vue'
+import PersonalLayout from '@/layouts/PersonalLayout.vue'
 import { PERSONAS } from '@/mock/pbl'
 import { useAiStore } from '@/stores/ai'
 import { usePblStore } from '@/stores/pbl'
 import { useUserStore } from '@/stores/user'
+import { ROLE_LABEL } from '@/utils/format'
 
 const pbl = usePblStore()
 const ai = useAiStore()
@@ -16,6 +17,15 @@ const user = useUserStore()
 const route = useRoute()
 const router = useRouter()
 pbl.ensurePersona(user.user?.role)
+// 视角会按登录角色重置；学生视角不能停在 AI 助教 / AI 办学
+const teacherOnly = (p: string) => p.startsWith('/units/desk') || p.startsWith('/insight')
+if (pbl.isStudent && teacherOnly(route.path)) router.replace('/units')
+
+// 和项目训练一样，左侧个人栏显示当前演示身份
+const demoProfile = computed(() => ({
+  name: pbl.me.name,
+  role: pbl.role === 'mentor' ? '指导教师' : ROLE_LABEL[pbl.role],
+}))
 
 const tabs = computed(() => {
   const t = [{ path: '/units', label: '能力成长', icon: 'Aim' }]
@@ -33,7 +43,7 @@ function switchPersona(id: string) {
   pbl.personaId = id
   const p = PERSONAS.find((x) => x.id === id)
   ElMessage.success(`已切换到「${p?.label}」视角`)
-  if (pbl.isStudent && (route.path.startsWith('/units/desk') || route.path.startsWith('/insight'))) router.push('/units')
+  if (pbl.isStudent && teacherOnly(route.path)) router.push('/units')
 }
 async function reset() {
   await ElMessageBox.confirm('恢复到初始演示数据？作答记录、审核结果等修改会被清掉。', '重置演示数据', { type: 'warning' })
@@ -43,9 +53,9 @@ async function reset() {
 </script>
 
 <template>
-  <AppHeader />
+  <PersonalLayout :demo-profile="demoProfile">
   <div class="ai-bar">
-    <div class="inner page-container">
+    <div class="inner">
       <nav class="tabs">
         <router-link v-for="t in tabs" :key="t.path" :to="t.path" :class="{ on: active === t.path }">
           <el-icon><component :is="t.icon" /></el-icon>{{ t.label }}
@@ -73,7 +83,7 @@ async function reset() {
       <el-tooltip content="重置演示数据"><el-button circle size="small" :icon="'RefreshLeft'" @click="reset" /></el-tooltip>
     </div>
   </div>
-  <main class="ai-main page-container">
+  <main class="ai-main">
     <router-view v-slot="{ Component }">
       <transition name="page" mode="out-in">
         <component :is="Component" :key="`${route.path}|${pbl.personaId}`" />
@@ -86,17 +96,20 @@ async function reset() {
     <span>AI 辅学</span>
   </button>
   <TutorDrawer />
+  </PersonalLayout>
 </template>
 
 <style scoped>
 .ai-bar {
   background: #fff;
-  border-bottom: 1px solid var(--ch-border);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius);
   position: sticky;
-  top: var(--ch-header-h);
+  top: calc(var(--ch-header-h) + 12px);
   z-index: 9;
 }
 .inner {
+  padding: 0 16px;
   height: 48px;
   display: flex;
   align-items: center;
@@ -114,7 +127,7 @@ async function reset() {
   display: flex;
   gap: 4px;
   height: 100%;
-  margin-left: -12px;
+  margin-left: -4px;
 }
 .tabs a {
   position: relative;
@@ -168,7 +181,7 @@ async function reset() {
   background: var(--ch-primary-bg);
 }
 .ai-main {
-  padding-top: 24px;
+  padding-top: 20px;
   padding-bottom: 64px;
 }
 .tutor-fab {

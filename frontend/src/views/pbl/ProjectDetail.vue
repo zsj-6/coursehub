@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BarChart from '@/components/pbl/BarChart.vue'
 import DiscussionBoard from '@/components/pbl/DiscussionBoard.vue'
+import FavoriteButton from '@/components/pbl/FavoriteButton.vue'
 import MilestoneTrack from '@/components/pbl/MilestoneTrack.vue'
 import PersonAvatar from '@/components/pbl/PersonAvatar.vue'
 import PieChart from '@/components/pbl/PieChart.vue'
@@ -28,16 +29,12 @@ const manage = computed(() => !!project.value && store.canManage(project.value))
 const teams = computed(() => store.teamsOf(props.projectId))
 const mine = computed(() => store.myTeam(props.projectId))
 const tasks = computed(() => store.tasksOf(props.projectId))
-const fav = computed(() => store.isFavorite(props.projectId))
 const interested = computed(() => !!project.value?.interestedIds.includes(store.personaId))
 const current = computed(() => (project.value ? store.currentMilestone(project.value) : undefined))
 const period = computed(() => {
   const ms = project.value?.milestones ?? []
   return ms.length ? `${fmt(ms[0].start, 'YYYY-MM-DD')} ~ ${fmt(ms[ms.length - 1].end, 'YYYY-MM-DD')}` : '未设置'
 })
-function toggleFav() {
-  ElMessage.success(store.toggleFavorite(props.projectId) ? '已收藏，可在「我指导的 / 我的项目 → 我的收藏」里找到' : '已取消收藏')
-}
 
 const tab = computed({
   get: () => (route.query.tab as string) || 'overview',
@@ -151,24 +148,19 @@ const overview = computed(() => ({
           <el-tag :type="PROJECT_STATUS[project.status].type">{{ PROJECT_STATUS[project.status].text }}</el-tag>
           <el-tag v-if="!project.published" type="info">未发布 · 学生不可见</el-tag>
         </div>
-        <div class="sub">
-          <router-link :to="`/pbl/programs/${project.programId}`">{{ program?.title }}</router-link>
-          <span>{{ program?.source }}</span>
-          <span>{{ program?.partner }}</span>
-        </div>
-        <div class="tags">
-          <span v-for="t in project.tags" :key="t" class="tag">{{ t }}</span>
+        <div class="muted">{{ program?.title }} · {{ program?.source }} · {{ program?.partner }}</div>
+        <div class="flex wrap meta">
+          <span class="flex">指导教师
+            <PersonAvatar v-for="m in project.mentorIds" :id="m" :key="m" :size="24" show-name />
+          </span>
+          <el-tag v-for="t in project.tags" :key="t" size="small" effect="plain" round>{{ t }}</el-tag>
+          <span class="muted"><el-icon><View /></el-icon> {{ project.views }} 次浏览</span>
+          <span class="muted"><el-icon><Star /></el-icon> {{ project.interestedIds.length }} 人收藏</span>
         </div>
       </div>
       <div class="ops">
-        <el-button :class="{ 'is-fav': fav }" @click="toggleFav">
-          <el-icon><StarFilled v-if="fav" /><Star v-else /></el-icon>
-          <span>{{ fav ? '已收藏' : '收藏' }}</span>
-        </el-button>
         <template v-if="store.isStudent">
-          <el-button :type="interested ? 'primary' : 'default'" :plain="interested" :icon="interested ? 'Check' : 'Pointer'" @click="store.toggleInterest(project)">
-            {{ interested ? '已感兴趣' : '感兴趣' }}
-          </el-button>
+          <FavoriteButton :project="project" />
           <el-button v-if="mine && project.status !== 'recruiting'" type="primary" :icon="'Right'" @click="router.push(`/pbl/projects/${project.id}/teams/${mine.id}`)">进入团队空间</el-button>
           <el-button v-else-if="!mine && project.status === 'recruiting'" type="primary" @click="tab = 'teaming'">报名 / 组队</el-button>
         </template>
@@ -477,11 +469,6 @@ const overview = computed(() => ({
 }
 .ops .el-button .el-icon + span {
   margin-left: 6px;
-}
-.is-fav {
-  color: #b7800f;
-  border-color: #f0d9a8;
-  background: #fdf8ec;
 }
 .side {
   border-left: 1px solid var(--ch-border-light);

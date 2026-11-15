@@ -6,7 +6,7 @@ import ProjectCard from '@/components/pbl/ProjectCard.vue'
 import ProjectFormDialog from '@/components/pbl/ProjectFormDialog.vue'
 import type { Program, ProjectStatus } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
-import { PROJECT_STATUS, programCover } from '@/utils/pbl'
+import { PROJECT_STATUS } from '@/utils/pbl'
 
 const store = usePblStore()
 const router = useRouter()
@@ -27,7 +27,7 @@ const tags = computed(() => [...new Set(store.visibleProjects.flatMap((p) => p.t
 const mentors = computed(() => store.data.people.filter((p) => p.role === 'mentor'))
 const projects = computed(() =>
   store.visibleProjects.filter((p) => {
-    if (scope.value === 'fav' && !store.isFavorite(p.id)) return false
+    if (scope.value === 'fav' && !p.interestedIds.includes(store.personaId)) return false
     const g = store.program(p.programId)
     const text = q.text.trim()
     return (
@@ -67,15 +67,18 @@ function saveProgram() {
 
 <template>
   <div>
-    <header class="intro">
-      <h1>项目大厅</h1>
-      <p class="muted">大项目拆成课题，学生按兴趣报名组队，按关卡推进，指导教师全程评阅。</p>
-    </header>
-    <section class="stat-strip">
-      <div class="stat"><div class="stat-label">大项目</div><div class="stat-value">{{ counts.programs }}<small>个</small></div></div>
-      <div class="stat"><div class="stat-label">课题</div><div class="stat-value">{{ counts.projects }}<small>个</small></div></div>
-      <div class="stat" :class="{ 'is-key': counts.recruiting }"><div class="stat-label">招募中</div><div class="stat-value">{{ counts.recruiting }}<small>个</small></div></div>
-      <div class="stat"><div class="stat-label">团队</div><div class="stat-value">{{ counts.teams }}<small>支</small></div></div>
+    <section class="hero">
+      <div>
+        <h1>项目大厅</h1>
+        <p>发现课题，组队实践，推进项目。</p>
+      </div>
+      <div class="spacer" />
+      <div class="nums">
+        <div><b>{{ counts.programs }}</b><span>大项目</span></div>
+        <div><b>{{ counts.projects }}</b><span>课题</span></div>
+        <div><b>{{ counts.recruiting }}</b><span>招募中</span></div>
+        <div><b>{{ counts.teams }}</b><span>团队</span></div>
+      </div>
     </section>
 
     <div class="page-title sub">
@@ -91,16 +94,10 @@ function saveProgram() {
       </div>
     </div>
     <div class="programs">
-      <router-link v-for="g in programs" :key="g.id" :to="`/pbl/programs/${g.id}`" class="program" :style="programCover(g.color)">
-        <div class="g-mark tone">{{ g.title.slice(0, 1) }}</div>
-        <div class="g-body">
-          <div class="gt">{{ g.title }}</div>
-          <div class="gm">{{ g.source }} · {{ g.level }} · {{ g.college }}</div>
-          <div class="gm">{{ g.partner }}</div>
-        </div>
-        <div class="g-nums">
-          <div><b>{{ store.projectsOf(g.id).length }}</b><span>课题</span></div>
-          <div><b>{{ store.projectsOf(g.id).reduce((n, p) => n + store.teamsOf(p.id).length, 0) }}</b><span>团队</span></div>
+      <router-link v-for="g in programs" :key="g.id" :to="`/pbl/programs/${g.id}`" class="program">
+        <div class="flex">
+          <span class="source">{{ g.source }}</span>
+          <span class="lv">{{ g.level }}</span>
         </div>
       </router-link>
     </div>
@@ -112,7 +109,7 @@ function saveProgram() {
     <div class="filters">
       <el-radio-group v-model="scope">
         <el-radio-button value="all">全部</el-radio-button>
-        <el-radio-button value="fav">我的收藏 {{ store.myFavoriteIds.length || '' }}</el-radio-button>
+        <el-radio-button value="fav">我的收藏 {{ store.favoriteProjects.length || '' }}</el-radio-button>
       </el-radio-group>
       <el-input v-model="q.text" placeholder="搜索课题或项目名称" clearable :prefix-icon="'Search'" style="width: 220px" />
       <el-select v-model="q.programId" clearable placeholder="大项目" style="width: 200px">
@@ -128,9 +125,9 @@ function saveProgram() {
         <el-option v-for="m in mentors" :key="m.id" :label="m.name" :value="m.id" />
       </el-select>
     </div>
-    <div v-if="!projects.length" class="empty-tip card">{{ scope === 'fav' && !store.myFavoriteIds.length ? '还没有收藏课题，点课题卡片右上角的 ☆ 即可收藏' : '没有符合条件的课题' }}</div>
+    <div v-if="!projects.length" class="empty-tip card">{{ scope === 'fav' && !store.favoriteProjects.length ? '还没有收藏课题，点课题卡片上的「收藏」即可' : '没有符合条件的课题' }}</div>
     <transition-group name="grid" tag="div" class="grid">
-      <ProjectCard v-for="p in projects" :key="p.id" :project="p" />
+      <ProjectCard v-for="p in projects" :key="p.id" :project="p" quiet />
     </transition-group>
 
     <ProjectFormDialog ref="formRef" @saved="(id) => router.push(`/pbl/projects/${id}`)" />
@@ -161,17 +158,23 @@ function saveProgram() {
 </template>
 
 <style scoped>
-.intro {
-  margin-bottom: 20px;
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 0 0 22px;
+  color: var(--ch-text);
+  border-bottom: 1px solid var(--ch-border);
+  margin-bottom: 22px;
 }
-.intro h1 {
-  margin: 0 0 2px;
-  font-size: 22px;
-  line-height: 32px;
-  letter-spacing: -0.01em;
+.hero h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
 }
 .intro p {
   margin: 0;
+  color: var(--ch-text-2);
 }
 .page-title.sub {
   font-size: 16px;
@@ -184,14 +187,7 @@ function saveProgram() {
 }
 .program {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  background: #fff;
-  border: 1px solid var(--ch-border);
-  border-radius: var(--ch-radius);
-  color: var(--ch-text);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  gap: 24px;
 }
 .program:hover {
   border-color: var(--el-border-color-hover);
@@ -237,14 +233,47 @@ function saveProgram() {
   flex-direction: column;
   align-items: center;
 }
-.g-nums b {
-  font-size: 18px;
+.nums b {
+  font-size: 22px;
   font-weight: 600;
-  line-height: 24px;
 }
 .g-nums span {
   font-size: 12px;
-  color: var(--ch-text-3);
+  color: var(--ch-text-2);
+}
+.programs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.program {
+  color: var(--ch-text);
+  background: #fff;
+  border: 1px solid var(--ch-border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+  transition: border-color 0.2s;
+}
+.program:hover {
+  border-color: #8fbfc1;
+}
+.source {
+  font-size: 12px;
+  color: #237c81;
+}
+.lv {
+  font-size: 12px;
+  color: var(--ch-text-2);
+}
+.gt {
+  font-size: 15px;
+  font-weight: 600;
+}
+.gm {
+  font-size: 12px;
+  color: var(--ch-text-2);
 }
 .filters {
   display: flex;

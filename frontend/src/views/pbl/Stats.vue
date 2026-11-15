@@ -102,7 +102,7 @@ const rows = computed(() =>
         <el-table-column label="任务" prop="tasks" width="70" sortable />
         <el-table-column label="讨论" prop="posts" width="70" sortable />
         <el-table-column label="浏览" prop="views" width="80" sortable />
-        <el-table-column label="感兴趣" prop="interested" width="90" sortable />
+        <el-table-column label="收藏" prop="interested" width="90" sortable />
       </el-table>
     </div>
   </div>
