@@ -27,7 +27,7 @@ const list = computed(() =>
     return true
   }),
 )
-const count = (s: string[]) => source.value.filter((p) => s.includes(p.status)).length
+const count = (statuses: Project['status'][]) => source.value.filter((p) => statuses.includes(p.status)).length
 const KIND_COLOR: Record<string, string> = { 待提交: '#f6903d', 待参与讨论: '#5b8ff9', 待评阅: '#3bb4b8', 关卡即将截止: '#e8684a' }
 const urgent = (t: string) => dayjs(t).diff(dayjs(), 'hour') < 48
 </script>
@@ -39,12 +39,12 @@ const urgent = (t: string) => dayjs(t).diff(dayjs(), 'hour') < 48
         <el-tab-pane :label="`我参与的 ${store.myProjects.length}`" name="participating" />
         <el-tab-pane :label="`我的收藏 ${store.favoriteProjects.length}`" name="favorites" />
       </el-tabs>
-      <div class="stats">
-        <div class="stat" :class="{ on: status === 'all' }" @click="status = 'all'"><b>{{ source.length }}</b><span>全部</span></div>
-        <div class="stat" :class="{ on: status === 'notstarted' }" @click="status = 'notstarted'"><b>{{ count(['recruiting', 'draft']) }}</b><span>未开始</span></div>
-        <div class="stat" :class="{ on: status === 'running' }" @click="status = 'running'"><b>{{ count(['running']) }}</b><span>进行中</span></div>
-        <div class="stat" :class="{ on: status === 'finished' }" @click="status = 'finished'"><b>{{ count(['finished']) }}</b><span>已结束</span></div>
-      </div>
+      <el-radio-group v-model="status" class="status-filters" aria-label="项目状态">
+        <el-radio-button value="all"><span>全部</span> {{ source.length }}</el-radio-button>
+        <el-radio-button value="notstarted"><span>未开始</span> {{ count(['recruiting', 'draft']) }}</el-radio-button>
+        <el-radio-button value="running"><span>进行中</span> {{ count(['running']) }}</el-radio-button>
+        <el-radio-button value="finished"><span>已结束</span> {{ count(['finished']) }}</el-radio-button>
+      </el-radio-group>
       <div v-if="!list.length" class="empty-tip card">
         <template v-if="status !== 'all'">该状态下暂无项目</template>
         <template v-else-if="tab === 'favorites'">还没有收藏项目，去项目大厅收藏感兴趣的课题吧</template>
@@ -77,30 +77,8 @@ const urgent = (t: string) => dayjs(t).diff(dayjs(), 'hour') < 48
   gap: 16px;
   align-items: start;
 }
-.stat {
-  position: relative;
-  cursor: pointer;
-}
-.stat:hover {
-  background: var(--ch-fill-hover);
-}
-.stat:first-child {
-  border-radius: var(--ch-radius) 0 0 var(--ch-radius);
-}
-.stat:last-child {
-  border-radius: 0 var(--ch-radius) var(--ch-radius) 0;
-}
-.stat.on .stat-value {
-  color: var(--ch-primary-text);
-}
-.stat.on::after {
-  content: '';
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  bottom: -1px;
-  height: 2px;
-  background: var(--ch-primary);
+.status-filters {
+  margin-bottom: 16px;
 }
 .grid {
   display: grid;

@@ -101,10 +101,13 @@ const mine = computed(() => store.myTeam(props.project.id))
 .top {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 12px 16px 0;
 }
-.top .el-tag {
+.st {
   margin-left: auto;
+  flex-shrink: 0;
 }
 .fav {
   display: grid;
@@ -127,10 +130,8 @@ const mine = computed(() => store.myTeam(props.project.id))
   color: #e8a317;
 }
 .prog {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   min-width: 0;
+  max-width: 100%;
   font-size: 12px;
   font-weight: 500;
   color: var(--tone);
@@ -138,20 +139,12 @@ const mine = computed(() => store.myTeam(props.project.id))
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.prog i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--tone);
-  flex-shrink: 0;
-}
 .title {
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
 }
 .mine-flag {
-  margin-left: 8px;
   font-size: 12px;
   font-weight: 500;
   color: var(--ch-primary-text);
@@ -223,10 +216,7 @@ const mine = computed(() => store.myTeam(props.project.id))
   height: auto;
   min-height: 42px;
   padding: 14px 16px 0;
-  display: flex;
   align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 6px 8px;
   color: var(--ch-text-2);
 }
 .quiet .prog {
