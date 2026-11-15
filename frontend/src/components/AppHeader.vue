@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ROLE_LABEL } from '@/utils/format'
 
-defineProps<{ sidebarNavigation?: boolean }>()
+defineProps<{ sidebarNavigation?: boolean; showAccountLabel?: boolean }>()
 
 const store = useUserStore()
 const router = useRouter()
@@ -33,6 +33,7 @@ function onCommand(cmd: string) {
     <div class="spacer" />
     <el-dropdown v-if="store.user" trigger="click" @command="onCommand">
       <span class="user">
+        <span v-if="showAccountLabel" class="muted">登录账号</span>
         <el-avatar :size="30" :src="store.user.avatar || undefined">{{ store.user.name.slice(-2) }}</el-avatar>
         <span>{{ store.user.name }}</span>
         <el-tag size="small" effect="plain" round>{{ ROLE_LABEL[store.user.role] }}</el-tag>

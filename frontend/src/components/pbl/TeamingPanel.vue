@@ -154,17 +154,21 @@ async function start() {
     <!-- 学生：报名 / 我的团队 -->
     <el-alert v-if="store.isStudent && mine" type="success" :closable="false" show-icon class="mb">
       <template #title>
-        你在「{{ mine.name }}」
+        {{ store.me.name }} 在「{{ mine.name }}」
         <el-button v-if="project.status !== 'recruiting'" link type="primary" @click="router.push(`/pbl/projects/${projectId}/teams/${mine.id}`)">进入团队空间 →</el-button>
       </template>
     </el-alert>
     <el-alert v-else-if="store.isStudent && rule.mode === 'random'" :type="signedUp ? 'success' : 'info'" :closable="false" show-icon class="mb">
       <template #title>
-        <span v-if="signedUp">已报名，等待老师在截止后统一分组</span>
+        <span v-if="signedUp">{{ store.me.name }}已报名，等待老师在截止后统一分组</span>
+        <span v-else-if="open">以{{ store.me.name }}的身份报名，截止后由老师统一分组</span>
         <span v-else>本课题采用报名后随机分组</span>
         <el-button v-if="open && !signedUp" type="primary" size="small" style="margin-left: 12px" @click="doSignup">我要报名</el-button>
         <el-button v-if="open && signedUp" size="small" style="margin-left: 12px" @click="store.cancelSignup(project)">取消报名</el-button>
       </template>
+    </el-alert>
+    <el-alert v-else-if="open && !store.isStudent && !manage" type="info" :closable="false" show-icon class="mb">
+      {{ rule.mode === 'random' ? '切换到学生演示视角即可报名' : '切换到学生演示视角即可加入团队' }}
     </el-alert>
 
     <!-- 待分组 -->

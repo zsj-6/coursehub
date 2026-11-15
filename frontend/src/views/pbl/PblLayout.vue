@@ -7,12 +7,18 @@ import PersonAvatar from '@/components/pbl/PersonAvatar.vue'
 import { PERSONAS } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
 import { useUserStore } from '@/stores/user'
+import { ROLE_LABEL } from '@/utils/format'
 
 const store = usePblStore()
 const user = useUserStore()
 const route = useRoute()
 const router = useRouter()
 store.ensurePersona(user.user?.role)
+
+const demoProfile = computed(() => ({
+  name: store.me.name,
+  role: store.role === 'mentor' ? '指导教师' : ROLE_LABEL[store.role],
+}))
 
 const tabs = computed(() => {
   const t = [
@@ -49,7 +55,7 @@ async function reset() {
 </script>
 
 <template>
-  <PersonalLayout>
+  <PersonalLayout :demo-profile="demoProfile">
     <div class="pbl-bar">
       <div class="inner">
         <div class="brand">

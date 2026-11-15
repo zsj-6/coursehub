@@ -3,19 +3,23 @@ import AppHeader from '@/components/AppHeader.vue'
 import { useUserStore } from '@/stores/user'
 import { ROLE_LABEL } from '@/utils/format'
 
+defineProps<{ demoProfile?: { name: string; role: string } }>()
+
 const user = useUserStore()
 </script>
 
 <template>
-  <AppHeader sidebar-navigation />
+  <AppHeader sidebar-navigation :show-account-label="!!demoProfile" />
   <div class="personal-layout">
     <aside class="personal-sidebar" aria-label="个人导航">
       <div class="identity">
-        <el-avatar :size="88" :src="user.user?.avatar || undefined" class="portrait">
+        <el-avatar :size="88" :src="demoProfile ? undefined : user.user?.avatar || undefined" class="portrait">
           <el-icon :size="60"><UserFilled /></el-icon>
         </el-avatar>
-        <div class="name">{{ user.user?.name }}</div>
-        <div class="role">{{ ROLE_LABEL[user.user?.role || 'student'] }}</div>
+        <div class="name">{{ demoProfile?.name ?? user.user?.name }}</div>
+        <div class="role">
+          {{ demoProfile ? `${demoProfile.role} · 演示身份` : ROLE_LABEL[user.user?.role || 'student'] }}
+        </div>
       </div>
       <nav class="navigation" aria-label="个人空间">
         <div class="group-label">{{ user.canCreateCourse ? '我的教学' : '我的学习' }}</div>
