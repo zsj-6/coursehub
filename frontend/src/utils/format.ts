@@ -87,6 +87,19 @@ export const toneVars = (i: number): Record<string, string> => {
   return { '--tone': t.fg, '--tone-bg': t.bg }
 }
 
+/** 课程卡片大封面的底纹：点阵、斜线、同心圆、方格，按课程 id 固定选一种。 */
+const COVER_PATTERNS = [
+  'radial-gradient(circle, var(--tone) 1.2px, transparent 1.7px) 0 0 / 14px 14px',
+  'repeating-linear-gradient(135deg, var(--tone) 0 1px, transparent 1px 11px)',
+  'repeating-radial-gradient(circle at 100% 100%, var(--tone) 0 1px, transparent 1px 13px)',
+  'linear-gradient(var(--tone) 1px, transparent 1px) 0 0 / 18px 18px, linear-gradient(90deg, var(--tone) 1px, transparent 1px) 0 0 / 18px 18px',
+]
+/** 大封面：浅色调 + 底纹（CSS 用 --art 画在 ::after 上）。有封面图时只返回图片。 */
+export function coverArt(id: number, cover?: string | null): Record<string, string> {
+  if (cover) return coverStyle(id, cover)
+  return { ...toneVars(id), '--art': COVER_PATTERNS[Math.floor(id / TONES.length + id) % COVER_PATTERNS.length] }
+}
+
 /** 课程封面：有封面图就用图，没有就按课程 id 取一个稳定的浅色调（由 CSS 读 --tone / --tone-bg）。 */
 export function coverStyle(id: number, cover?: string | null): Record<string, string> {
   if (cover) return { ...toneVars(id), backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' }

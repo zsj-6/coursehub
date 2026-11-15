@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { coursesApi } from '@/api/courses'
 import type { Course } from '@/api/types'
 import { useUserStore } from '@/stores/user'
-import { ROLE_LABEL, coverStyle } from '@/utils/format'
+import { ROLE_LABEL, coverArt } from '@/utils/format'
 
 const store = useUserStore()
 const router = useRouter()
@@ -78,13 +78,13 @@ async function join() {
 
     <div v-loading="loading" class="grid">
       <router-link v-for="c in courses" :key="c.id" :to="`/courses/${c.id}`" class="course-card">
-        <div class="cover tone" :style="coverStyle(c.id, c.cover)">
-          <span v-if="!c.cover" class="mono">{{ c.name.slice(0, 1) }}</span>
+        <div class="cover tone" :class="{ art: !c.cover }" :style="coverArt(c.id, c.cover)">
           <span class="role">{{ ROLE_LABEL[c.my_role || 'student'] }}</span>
+          <div v-if="!c.cover" class="cover-name">{{ c.name }}</div>
         </div>
         <div class="body">
-          <div class="name" :title="c.name">{{ c.name }}</div>
-          <div class="muted">{{ c.owner?.name || '—' }} · {{ c.semester || '未设置学期' }}</div>
+          <div v-if="c.cover" class="name" :title="c.name">{{ c.name }}</div>
+          <div class="muted ellipsis">{{ c.owner?.name || '—' }} · {{ c.semester || '未设置学期' }}</div>
           <div class="foot">
             <span><b>{{ c.student_count ?? 0 }}</b> 名学生</span>
             <span class="code">{{ c.code }}</span>
@@ -138,18 +138,44 @@ async function join() {
   box-shadow: var(--el-box-shadow-lighter);
 }
 .cover {
-  height: 88px;
+  height: 112px;
   position: relative;
-  padding: 12px 16px;
+  overflow: hidden;
+  padding: 14px 16px;
   display: flex;
   align-items: flex-end;
 }
-.mono {
-  font-size: 30px;
+/* 底纹只铺在右侧，向左淡出，不压住课程名 */
+.cover.art::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 35%;
+  background: var(--art);
+  opacity: 0.22;
+  -webkit-mask-image: linear-gradient(to left, #000 30%, transparent);
+  mask-image: linear-gradient(to left, #000 30%, transparent);
+  pointer-events: none;
+}
+.cover-name {
+  position: relative;
+  z-index: 1;
+  max-width: 80%;
+  font-size: 18px;
   font-weight: 600;
-  line-height: 1;
+  line-height: 26px;
+  letter-spacing: -0.01em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .role {
+  z-index: 1;
   position: absolute;
   top: 12px;
   right: 12px;

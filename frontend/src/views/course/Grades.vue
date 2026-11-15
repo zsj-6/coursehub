@@ -3,6 +3,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onMounted, ref } from 'vue'
 import { type ScoreRatios, coursesApi } from '@/api/courses'
 import type { GradeTable } from '@/api/types'
+import ColumnChart from '@/components/charts/ColumnChart.vue'
+import RateBars from '@/components/charts/RateBars.vue'
 import { useCourseStore } from '@/stores/course'
 import { STATUS_LABEL, TYPE_LABEL, fmtScore } from '@/utils/format'
 
@@ -32,6 +34,42 @@ const stats = computed(() => {
   if (!totals.length) return null
   const avg = totals.reduce((a, b) => a + b, 0) / totals.length
   return { avg: avg.toFixed(1), max: Math.max(...totals), min: Math.min(...totals), pass: totals.filter((t) => t >= 60).length }
+})
+
+/** 总评分数段分布（与「及格 ≥60」口径一致）。 */
+const distribution = computed(() => {
+  const totals = (table.value?.rows ?? []).map((r) => r.total)
+  const bins = [
+    { label: '<60', test: (t: number) => t < 60, range: '60 分以下（不及格）' },
+    { label: '60–69', test: (t: number) => t >= 60 && t < 70, range: '60–69 分' },
+    { label: '70–79', test: (t: number) => t >= 70 && t < 80, range: '70–79 分' },
+    { label: '80–89', test: (t: number) => t >= 80 && t < 90, range: '80–89 分' },
+    { label: '90+', test: (t: number) => t >= 90, range: '90 分及以上' },
+  ]
+  return bins.map((b) => {
+    const n = totals.filter(b.test).length
+    const share = totals.length ? Math.round((n / totals.length) * 100) : 0
+    return { label: b.label, value: n, tip: `${b.range}：${n} 人，占 ${share}%` }
+  })
+})
+
+/** 每个作业、测试的平均得分率 = 有成绩学生的平均分 ÷ 满分。 */
+const activityRates = computed(() => {
+  const t = table.value
+  if (!t) return []
+  return t.activities.map((a) => {
+    const scores = t.rows.map((r) => r.cells[a.id]).filter((c) => c && !c.hidden && c.final !== null).map((c) => c.final as number)
+    const avg = scores.length ? scores.reduce((x, y) => x + y, 0) / scores.length : null
+    const percent = avg === null || !a.full_score ? null : (avg / a.full_score) * 100
+    return {
+      key: a.id,
+      label: a.title,
+      to: `/courses/${cs.course!.id}/activities/${a.id}`,
+      percent,
+      note: `${scores.length}/${t.rows.length} 有成绩`,
+      tip: avg === null ? `${a.title}：还没有成绩` : `${TYPE_LABEL[a.type]} · 平均 ${fmtScore(Math.round(avg * 10) / 10)} / ${a.full_score} 分 · ${scores.length} 人有成绩`,
+    }
+  })
 })
 
 type Row = GradeTable['rows'][number]
@@ -99,6 +137,23 @@ async function editCell(row: Row, activityId: number | null) {
         <div class="stat-value">{{ table.ratio_sum }}<small>%</small></div>
         <div class="stat-note">还可分配 {{ Math.max(100 - table.ratio_sum, 0) }}%</div>
       </div>
+    </div>
+
+    <div v-if="table && cs.canGrade && table.rows.length" class="charts">
+      <section class="card">
+        <div class="chart-head">
+          <h3 class="card-title">总评分布</h3>
+          <span class="muted">共 {{ table.rows.length }} 人 · 单位：人</span>
+        </div>
+        <ColumnChart :items="distribution" unit=" 人" />
+      </section>
+      <section class="card">
+        <div class="chart-head">
+          <h3 class="card-title">各活动平均得分率</h3>
+          <span class="muted">平均分 ÷ 满分，只算已有成绩的学生</span>
+        </div>
+        <RateBars :rows="activityRates" empty="还没有作业或测试" />
+      </section>
     </div>
 
     <section v-loading="loading" class="card">
@@ -180,6 +235,30 @@ async function editCell(row: Row, activityId: number | null) {
 </template>
 
 <style scoped>
+.charts {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.chart-head .card-title {
+  margin: 0;
+}
+.chart-head .muted {
+  font-size: 12px;
+}
+@media (max-width: 1000px) {
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .th {
   line-height: 1.4;
   white-space: normal;

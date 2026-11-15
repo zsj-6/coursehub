@@ -7,7 +7,7 @@ import type { CompletionSettings } from '@/api/types'
 import { filesApi } from '@/api/files'
 import { useCourseStore } from '@/stores/course'
 import { useUserStore } from '@/stores/user'
-import { coverStyle } from '@/utils/format'
+import { coverArt } from '@/utils/format'
 
 const cs = useCourseStore()
 const me = useUserStore()
@@ -89,7 +89,7 @@ async function remove() {
     <section class="card">
       <el-form label-width="90px" style="max-width: 560px">
         <el-form-item label="封面">
-          <div class="cover tone" :style="coverStyle(c.id, form.cover)" />
+          <div class="cover tone" :class="{ art: !form.cover }" :style="coverArt(c.id, form.cover)"><span v-if="!form.cover">{{ form.name || c.name }}</span></div>
           <input ref="coverInput" type="file" accept="image/*" hidden @change="onCover" />
           <div class="flex" style="margin-left: 12px">
             <el-button size="small" @click="coverInput?.click()">上传封面</el-button>
@@ -158,9 +158,29 @@ async function remove() {
 
 <style scoped>
 .cover {
-  width: 160px;
-  height: 90px;
-  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  width: 200px;
+  height: 112px;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-end;
+  font-weight: 600;
+  line-height: 22px;
+}
+.cover span {
+  position: relative;
+  z-index: 1;
+}
+.cover.art::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 35%;
+  background: var(--art);
+  opacity: 0.22;
+  -webkit-mask-image: linear-gradient(to left, #000 30%, transparent);
+  mask-image: linear-gradient(to left, #000 30%, transparent);
 }
 .code {
   font-size: 24px;
