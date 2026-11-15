@@ -5,6 +5,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 import { activitiesApi } from '@/api/activities'
 import type { Activity, Question, QuestionType } from '@/api/types'
 import { Q_LABEL, optionLetter } from '@/utils/format'
+import BackBar from '@/components/BackBar.vue'
 
 const props = defineProps<{ activityId: number }>()
 const act = ref<Activity | null>(null)
@@ -131,11 +132,7 @@ async function save() {
 
 <template>
   <div v-if="act" @input="dirty = true">
-    <el-breadcrumb separator="/" style="margin-bottom: 12px">
-      <el-breadcrumb-item :to="`/courses/${act.course_id}`">课程内容</el-breadcrumb-item>
-      <el-breadcrumb-item :to="`/courses/${act.course_id}/activities/${act.id}`">{{ act.title }}</el-breadcrumb-item>
-      <el-breadcrumb-item>管理题目</el-breadcrumb-item>
-    </el-breadcrumb>
+    <BackBar :items="[{ label: '课程内容', to: `/courses/${act.course_id}` }, { label: act.title, to: `/courses/${act.course_id}/activities/${act.id}` }, { label: '管理题目' }]" />
 
     <div class="toolbar card">
       <b>{{ act.title }}</b>

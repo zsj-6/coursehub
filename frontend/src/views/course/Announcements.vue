@@ -108,10 +108,10 @@ async function remove(a: Announcement) {
   margin-bottom: 12px;
 }
 .ann.pinned {
-  border-left: 3px solid #e8684a;
+  border-left: 3px solid var(--ch-danger);
 }
 .ann.hidden {
-  background: #fafbfc;
+  background: var(--ch-fill);
 }
 .title {
   font-size: 16px;

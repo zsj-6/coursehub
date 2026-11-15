@@ -18,25 +18,22 @@ const shared = computed(() => store.sharedResources)
     <div v-if="!list.length" class="empty-tip card">还没有成果。课题结项后，指导教师可以在「评价与成果」里把优秀团队的成果发布到这里。</div>
     <div class="grid">
       <div v-for="t in list" :key="t.id" class="sc" @click="detail = t">
-        <div class="cover" :style="programCover(store.program(store.project(t.projectId)!.programId)?.color ?? 0)">
-          <el-icon size="34"><Trophy /></el-icon>
-          <span>{{ store.project(t.projectId)?.title }}</span>
-        </div>
-        <div class="body">
+        <div class="body" :style="programCover(store.program(store.project(t.projectId)!.programId)?.color ?? 0)">
+          <div class="from"><i />{{ store.project(t.projectId)?.title }}</div>
           <b class="title">{{ t.showcase!.title }}</b>
           <div class="muted">{{ t.name }} · {{ fmt(t.showcase!.at, 'YYYY-MM-DD') }}</div>
           <p>{{ t.showcase!.summary }}</p>
           <div class="flex">
             <span class="avs"><PersonAvatar v-for="sid in t.memberIds" :id="sid" :key="sid" :size="24" /></span>
             <div class="spacer" />
-            <el-tag v-if="t.evaluation" type="success" effect="plain">项目评价 {{ t.evaluation.score }}</el-tag>
+            <span v-if="t.evaluation" class="eval">项目评价 <b>{{ t.evaluation.score }}</b></span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="page-title" style="margin-top: 24px"><span>校内共享资料</span><span class="muted">各团队设为「校内公开」的过程资料</span></div>
-    <el-table :data="shared" class="card" empty-text="暂无">
+    <div class="page-title" style="margin-top: 28px"><span>校内共享资料</span><span class="muted">各团队设为「校内公开」的过程资料</span></div>
+    <el-table :data="shared" class="card table-card" empty-text="暂无">
       <el-table-column label="名称" prop="title" min-width="220" />
       <el-table-column label="团队" width="120"><template #default="{ row }">{{ store.team(row.teamId)?.name }}</template></el-table-column>
       <el-table-column label="课题" min-width="160"><template #default="{ row }">{{ store.project(row.projectId)?.title }}</template></el-table-column>
@@ -66,39 +63,45 @@ const shared = computed(() => store.sharedResources)
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 .sc {
   background: #fff;
   border: 1px solid var(--ch-border);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: var(--ch-radius);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .sc:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-}
-.cover {
-  height: 90px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 18px;
-  font-weight: 600;
+  border-color: var(--el-border-color-hover);
+  box-shadow: var(--el-box-shadow-lighter);
 }
 .body {
-  padding: 14px 16px;
+  padding: 16px;
   display: grid;
   gap: 6px;
 }
+.from {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tone);
+}
+.from i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tone);
+}
 .title {
   font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
 }
 .body p {
-  margin: 4px 0;
+  margin: 4px 0 8px;
   color: var(--ch-text-2);
   line-height: 1.7;
   display: -webkit-box;
@@ -110,8 +113,21 @@ const shared = computed(() => store.sharedResources)
   display: flex;
   gap: 4px;
 }
+.eval {
+  font-size: 13px;
+  color: var(--ch-text-2);
+}
+.eval b {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ch-primary-text);
+  margin-left: 2px;
+}
+.table-card {
+  padding: 4px 12px;
+}
 .score {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
   font-size: 20px;
   margin-right: 6px;
 }

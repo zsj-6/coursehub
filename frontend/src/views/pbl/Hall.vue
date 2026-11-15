@@ -22,10 +22,12 @@ const programs = computed(() =>
 
 // 课题筛选
 const q = reactive({ text: '', status: '' as '' | ProjectStatus, tag: '', mentor: '', programId: '' })
+const scope = ref<'all' | 'fav'>('all')
 const tags = computed(() => [...new Set(store.visibleProjects.flatMap((p) => p.tags))])
 const mentors = computed(() => store.data.people.filter((p) => p.role === 'mentor'))
 const projects = computed(() =>
   store.visibleProjects.filter((p) => {
+    if (scope.value === 'fav' && !store.isFavorite(p.id)) return false
     const g = store.program(p.programId)
     const text = q.text.trim()
     return (
@@ -65,49 +67,53 @@ function saveProgram() {
 
 <template>
   <div>
-    <section class="hero">
-      <div>
-        <h2>从真实项目出发，组队闯关</h2>
-        <p>大项目拆成课题，学生按兴趣报名组队，按关卡推进，指导老师全程评阅。</p>
-      </div>
-      <div class="spacer" />
-      <div class="nums">
-        <div><b>{{ counts.programs }}</b><span>大项目</span></div>
-        <div><b>{{ counts.projects }}</b><span>课题</span></div>
-        <div><b>{{ counts.recruiting }}</b><span>招募中</span></div>
-        <div><b>{{ counts.teams }}</b><span>团队</span></div>
-      </div>
+    <header class="intro">
+      <h1>项目大厅</h1>
+      <p class="muted">大项目拆成课题，学生按兴趣报名组队，按关卡推进，指导教师全程评阅。</p>
+    </header>
+    <section class="stat-strip">
+      <div class="stat"><div class="stat-label">大项目</div><div class="stat-value">{{ counts.programs }}<small>个</small></div></div>
+      <div class="stat"><div class="stat-label">课题</div><div class="stat-value">{{ counts.projects }}<small>个</small></div></div>
+      <div class="stat" :class="{ 'is-key': counts.recruiting }"><div class="stat-label">招募中</div><div class="stat-value">{{ counts.recruiting }}<small>个</small></div></div>
+      <div class="stat"><div class="stat-label">团队</div><div class="stat-value">{{ counts.teams }}<small>支</small></div></div>
     </section>
 
-    <div class="page-title">
+    <div class="page-title sub">
       <span>大项目</span>
       <div class="flex">
-        <el-select v-model="progQ.college" clearable placeholder="学院" size="small" style="width: 130px">
+        <el-select v-model="progQ.college" clearable placeholder="学院" style="width: 130px">
           <el-option v-for="c in colleges" :key="c" :label="c" :value="c" />
         </el-select>
-        <el-select v-model="progQ.source" clearable placeholder="来源" size="small" style="width: 110px">
+        <el-select v-model="progQ.source" clearable placeholder="来源" style="width: 110px">
           <el-option v-for="s in ['竞赛项目', '企业项目', '科研课题']" :key="s" :label="s" :value="s" />
         </el-select>
-        <el-button v-if="store.isAdmin" size="small" type="primary" plain :icon="'Plus'" @click="openProgram">新建大项目</el-button>
+        <el-button v-if="store.isAdmin" :icon="'Plus'" @click="openProgram">新建大项目</el-button>
       </div>
     </div>
     <div class="programs">
       <router-link v-for="g in programs" :key="g.id" :to="`/pbl/programs/${g.id}`" class="program" :style="programCover(g.color)">
-        <div class="flex">
-          <el-tag size="small" effect="light">{{ g.source }}</el-tag>
-          <span class="lv">{{ g.level }}</span>
+        <div class="g-mark tone">{{ g.title.slice(0, 1) }}</div>
+        <div class="g-body">
+          <div class="gt">{{ g.title }}</div>
+          <div class="gm">{{ g.source }} · {{ g.level }} · {{ g.college }}</div>
+          <div class="gm">{{ g.partner }}</div>
         </div>
-        <div class="gt">{{ g.title }}</div>
-        <div class="gm">{{ g.college }} · {{ g.partner }}</div>
-        <div class="gm">{{ store.projectsOf(g.id).length }} 个课题 · {{ store.projectsOf(g.id).reduce((n, p) => n + store.teamsOf(p.id).length, 0) }} 个团队</div>
+        <div class="g-nums">
+          <div><b>{{ store.projectsOf(g.id).length }}</b><span>课题</span></div>
+          <div><b>{{ store.projectsOf(g.id).reduce((n, p) => n + store.teamsOf(p.id).length, 0) }}</b><span>团队</span></div>
+        </div>
       </router-link>
     </div>
 
-    <div class="page-title" style="margin-top: 24px">
+    <div class="page-title sub" style="margin-top: 28px">
       <span>全部课题</span>
       <el-button v-if="!store.isStudent" type="primary" :icon="'Plus'" @click="formRef?.open()">新建课题</el-button>
     </div>
     <div class="filters">
+      <el-radio-group v-model="scope">
+        <el-radio-button value="all">全部</el-radio-button>
+        <el-radio-button value="fav">我的收藏 {{ store.myFavoriteIds.length || '' }}</el-radio-button>
+      </el-radio-group>
       <el-input v-model="q.text" placeholder="搜索课题或项目名称" clearable :prefix-icon="'Search'" style="width: 220px" />
       <el-select v-model="q.programId" clearable placeholder="大项目" style="width: 200px">
         <el-option v-for="g in store.data.programs" :key="g.id" :label="g.title" :value="g.id" />
@@ -122,7 +128,7 @@ function saveProgram() {
         <el-option v-for="m in mentors" :key="m.id" :label="m.name" :value="m.id" />
       </el-select>
     </div>
-    <div v-if="!projects.length" class="empty-tip card">没有符合条件的课题</div>
+    <div v-if="!projects.length" class="empty-tip card">{{ scope === 'fav' && !store.myFavoriteIds.length ? '还没有收藏课题，点课题卡片右上角的 ☆ 即可收藏' : '没有符合条件的课题' }}</div>
     <transition-group name="grid" tag="div" class="grid">
       <ProjectCard v-for="p in projects" :key="p.id" :project="p" />
     </transition-group>
@@ -155,88 +161,108 @@ function saveProgram() {
 </template>
 
 <style scoped>
-.hero {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-  padding: 22px 28px;
-  border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(120deg, #2a8c99, #3bb4b8 45%, #5b8ff9);
+.intro {
   margin-bottom: 20px;
 }
-.hero h2 {
-  margin: 0 0 6px;
+.intro h1 {
+  margin: 0 0 2px;
   font-size: 22px;
+  line-height: 32px;
+  letter-spacing: -0.01em;
 }
-.hero p {
+.intro p {
   margin: 0;
-  opacity: 0.9;
 }
-.nums {
+.page-title.sub {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.programs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 16px;
+}
+.program {
   display: flex;
-  gap: 28px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius);
+  color: var(--ch-text);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.nums div {
+.program:hover {
+  border-color: var(--el-border-color-hover);
+  box-shadow: var(--el-box-shadow-lighter);
+}
+.g-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.g-body {
+  flex: 1;
+  min-width: 0;
+}
+.gt {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gm {
+  font-size: 12px;
+  color: var(--ch-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.g-nums {
+  display: flex;
+  gap: 16px;
+  padding-left: 14px;
+  border-left: 1px solid var(--ch-border-light);
+}
+.g-nums div {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.nums b {
-  font-size: 26px;
+.g-nums b {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
 }
-.nums span {
+.g-nums span {
   font-size: 12px;
-  opacity: 0.85;
-}
-.programs {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
-}
-.program {
-  color: #fff;
-  border-radius: 10px;
-  padding: 16px;
-  display: grid;
-  gap: 6px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.program:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.15);
-}
-.lv {
-  font-size: 12px;
-  opacity: 0.85;
-}
-.gt {
-  font-size: 17px;
-  font-weight: 700;
-}
-.gm {
-  font-size: 12px;
-  opacity: 0.9;
+  color: var(--ch-text-3);
 }
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
 }
 .grid-move,
 .grid-enter-active {
-  transition: all 0.35s;
+  transition: all 0.2s;
 }
 .grid-enter-from {
   opacity: 0;
-  transform: scale(0.95);
 }
 .grid-leave-active {
   display: none;

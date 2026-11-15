@@ -4,20 +4,14 @@ import AppHeader from '@/components/AppHeader.vue'
 
 <template>
   <AppHeader />
-  <main class="main">
+  <main class="main page-container">
     <router-view />
   </main>
 </template>
 
 <style scoped>
 .main {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 20px 24px 40px;
-}
-@media (max-width: 640px) {
-  .main {
-    padding: 16px;
-  }
+  padding-top: 24px;
+  padding-bottom: 48px;
 }
 </style>

@@ -183,6 +183,6 @@ onMounted(async () => {
 .score {
   font-weight: 600;
   font-size: 18px;
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 </style>

@@ -28,7 +28,7 @@ const months = computed(() => {
   }
   return res
 })
-const COLORS = { done: '#3bb4b8', current: '#f6903d', upcoming: '#c9d2dc' }
+const COLORS = { done: '#12969c', current: '#e8862e', upcoming: '#dcdfe3' }
 </script>
 
 <template>
@@ -44,7 +44,7 @@ const COLORS = { done: '#3bb4b8', current: '#f6903d', upcoming: '#c9d2dc' }
       <div class="lane">
         <el-tooltip v-for="(m, i) in p.milestones" :key="m.id" placement="top"
           :content="`关卡 ${i + 1} · ${m.title}（${fmt(m.start, 'MM-DD')} ~ ${fmt(m.end, 'MM-DD')}）`">
-          <div class="seg" :style="{ left: `${pos(m.start)}%`, width: `${Math.max(pos(m.end) - pos(m.start), 0.8)}%`, background: COLORS[store.milestoneState(m)] }">
+          <div class="seg" :class="store.milestoneState(m)" :style="{ left: `${pos(m.start)}%`, width: `${Math.max(pos(m.end) - pos(m.start), 0.8)}%`, background: COLORS[store.milestoneState(m)] }">
             <span>{{ i + 1 }}</span>
           </div>
         </el-tooltip>
@@ -67,25 +67,29 @@ const COLORS = { done: '#3bb4b8', current: '#f6903d', upcoming: '#c9d2dc' }
 .head,
 .row {
   display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 12px;
+  grid-template-columns: 180px 1fr;
+  gap: 16px;
   min-width: 640px;
 }
 .axis {
   position: relative;
-  height: 22px;
-  border-bottom: 1px solid var(--ch-border);
+  height: 24px;
+  border-bottom: 1px solid var(--ch-border-light);
 }
 .month {
   position: absolute;
   font-size: 12px;
-  color: var(--ch-text-2);
-  border-left: 1px dashed var(--ch-border);
-  padding-left: 4px;
+  color: var(--ch-text-3);
+  border-left: 1px solid var(--ch-border-light);
+  padding-left: 6px;
+  height: 100%;
 }
 .row {
   align-items: center;
-  height: 36px;
+  height: 40px;
+}
+.row + .row {
+  border-top: 1px solid var(--ch-border-light);
 }
 .name-col {
   font-size: 13px;
@@ -94,51 +98,53 @@ const COLORS = { done: '#3bb4b8', current: '#f6903d', upcoming: '#c9d2dc' }
   white-space: nowrap;
   color: var(--ch-text);
 }
+a.name-col:hover {
+  color: var(--ch-primary-text);
+}
 .lane {
   position: relative;
-  height: 20px;
-  background: #f7f9fb;
-  border-radius: 4px;
+  height: 16px;
 }
 .seg {
   position: absolute;
   top: 0;
-  height: 20px;
-  border-radius: 4px;
+  height: 16px;
+  border-radius: 3px;
   color: #fff;
   font-size: 11px;
+  font-weight: 600;
   display: grid;
   place-items: center;
-  border-right: 2px solid #fff;
-  animation: grow 0.7s ease-out;
-  transform-origin: left;
+  box-shadow: 0 0 0 1px #fff;
 }
-@keyframes grow {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+.seg.upcoming {
+  color: var(--ch-text-2);
 }
 .today {
   position: absolute;
-  top: -6px;
-  bottom: -6px;
-  width: 2px;
-  background: #e8684a;
+  top: -12px;
+  bottom: -12px;
+  width: 1px;
+  background: var(--ch-danger);
 }
 .legend {
   display: flex;
   gap: 16px;
-  margin-top: 12px;
+  margin-top: 14px;
   flex-wrap: wrap;
+  font-size: 12px;
 }
 .legend i {
   display: inline-block;
-  width: 12px;
-  height: 10px;
+  width: 10px;
+  height: 8px;
   border-radius: 2px;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 .legend i.tl {
-  width: 2px;
-  background: #e8684a;
+  width: 1px;
+  height: 10px;
+  vertical-align: -1px;
+  background: var(--ch-danger);
 }
 </style>

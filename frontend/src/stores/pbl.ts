@@ -24,6 +24,7 @@ import {
 
 const DATA_KEY = 'coursehub_pbl_data'
 const PERSONA_KEY = 'coursehub_pbl_persona'
+const FAV_KEY = 'coursehub_pbl_favorites'
 
 function loadData(): PblData {
   try {
@@ -36,6 +37,17 @@ function loadData(): PblData {
     /* localStorage 不可用或数据损坏时用初始数据 */
   }
   return createSeed()
+}
+
+/** 收藏：{ 演示视角 id: 课题 id[] }。和演示数据分开存，改版演示数据时不会丢。 */
+function loadFavorites(): Record<string, string[]> {
+  try {
+    const raw = localStorage.getItem(FAV_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {
+    /* ignore */
+  }
+  return {}
 }
 
 function readPersona(): string | null {
@@ -55,6 +67,7 @@ export type MilestoneState = 'done' | 'current' | 'upcoming'
 export const usePblStore = defineStore('pbl', () => {
   const data = reactive<PblData>(loadData())
   const personaId = ref<string>(readPersona() || '')
+  const favorites = reactive<Record<string, string[]>>(loadFavorites())
 
   watch(
     data,
@@ -63,6 +76,17 @@ export const usePblStore = defineStore('pbl', () => {
         localStorage.setItem(DATA_KEY, JSON.stringify(v))
       } catch {
         /* 存不了就只保留在内存里 */
+      }
+    },
+    { deep: true },
+  )
+  watch(
+    favorites,
+    (v) => {
+      try {
+        localStorage.setItem(FAV_KEY, JSON.stringify(v))
+      } catch {
+        /* ignore */
       }
     },
     { deep: true },
@@ -83,6 +107,18 @@ export const usePblStore = defineStore('pbl', () => {
 
   function reset() {
     Object.assign(data, createSeed())
+    for (const k of Object.keys(favorites)) delete favorites[k]
+  }
+
+  const myFavoriteIds = computed(() => favorites[personaId.value] ?? [])
+  const isFavorite = (pid: string) => myFavoriteIds.value.includes(pid)
+  /** 收藏 / 取消收藏，返回操作后是否已收藏。 */
+  function toggleFavorite(pid: string) {
+    const list = (favorites[personaId.value] ??= [])
+    const i = list.indexOf(pid)
+    if (i >= 0) list.splice(i, 1)
+    else list.unshift(pid)
+    return i < 0
   }
 
   // ---------- 查询 ----------
@@ -406,7 +442,7 @@ export const usePblStore = defineStore('pbl', () => {
     person, program, project, team, task, canManage, canSee, visibleProjects, projectsOf, teamsOf, myTeam,
     tasksOf, topicsOf, myProjects, milestoneState, currentMilestone, progressPercent, subsOf, latestSub, taskState,
     resourcesOf, sharedResources, postsOf,
-    saveProject, setPublished, view, toggleInterest,
+    saveProject, setPublished, view, toggleInterest, myFavoriteIds, isFavorite, toggleFavorite,
     saveTeaming, createTeam, removeTeam, addMember, removeMember, joinTeam, leaveTeam, signup, cancelSignup,
     unassigned, planRandomGroups, applyGroups, startProject, finishProject,
     saveTask, removeTask, submitTask, grade, toggleRecommend, urge, recommended,

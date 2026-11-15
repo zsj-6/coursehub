@@ -5,6 +5,7 @@ import { activitiesApi } from '@/api/activities'
 import type { Activity, Submission } from '@/api/types'
 import { useCourseStore } from '@/stores/course'
 import { Q_LABEL, fmt, fmtScore, optionLetter } from '@/utils/format'
+import BackBar from '@/components/BackBar.vue'
 
 /** 测试答卷查看；教师/助教可以给简答题打分。 */
 const props = defineProps<{ submissionId: number }>()
@@ -77,11 +78,7 @@ async function saveGrade() {
 
 <template>
   <div v-if="sub">
-    <el-breadcrumb separator="/" style="margin-bottom: 12px">
-      <el-breadcrumb-item :to="`/courses/${cs.course?.id}`">课程内容</el-breadcrumb-item>
-      <el-breadcrumb-item :to="`/courses/${cs.course?.id}/activities/${sub.activity_id}`">{{ act?.title || '测试' }}</el-breadcrumb-item>
-      <el-breadcrumb-item>答卷</el-breadcrumb-item>
-    </el-breadcrumb>
+    <BackBar :items="[{ label: '课程内容', to: `/courses/${cs.course?.id}` }, { label: act?.title || '测试', to: `/courses/${cs.course?.id}/activities/${sub.activity_id}` }, { label: '答卷' }]" />
 
     <section class="card head">
       <div>
@@ -168,7 +165,7 @@ async function saveGrade() {
 .big {
   font-size: 28px;
   font-weight: 700;
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .big.pending {
   font-size: 20px;
@@ -194,7 +191,7 @@ async function saveGrade() {
   margin-bottom: 8px;
 }
 .got {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .stem {
   margin-bottom: 8px;

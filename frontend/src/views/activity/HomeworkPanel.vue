@@ -187,10 +187,10 @@ onMounted(() => (isStudent.value ? loadMine() : loadRows()))
 }
 .score {
   font-weight: 600;
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .sub {
-  background: #f7f9fa;
+  background: var(--ch-fill);
   border-radius: 6px;
   padding: 10px 12px;
   display: flex;
@@ -200,6 +200,6 @@ onMounted(() => (isStudent.value ? loadMine() : loadRows()))
 .feedback {
   border-top: 1px dashed var(--ch-border);
   padding-top: 6px;
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 </style>

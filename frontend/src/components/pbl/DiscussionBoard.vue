@@ -250,7 +250,7 @@ const showCloud = ref(false)
   margin-bottom: 4px;
 }
 .topic:hover {
-  background: #f5f7fa;
+  background: var(--ch-fill);
 }
 .topic.on {
   background: var(--el-color-primary-light-9);
@@ -283,19 +283,17 @@ const showCloud = ref(false)
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: linear-gradient(135deg, #f0fafa, #f5f3ff);
+  background: var(--ch-fill);
   border-radius: 8px;
   margin-bottom: 12px;
 }
 .word {
-  color: var(--ch-primary);
-  font-weight: 600;
+  color: var(--ch-text-2);
+  font-weight: 500;
 }
 .word:nth-child(3n) {
-  color: #9270ca;
-}
-.word:nth-child(3n + 1) {
-  color: #5b8ff9;
+  color: var(--ch-primary-text);
+  font-weight: 600;
 }
 .post {
   display: flex;
@@ -325,7 +323,7 @@ const showCloud = ref(false)
 }
 .op:hover,
 .op.liked {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .op.liked {
   font-weight: 600;
@@ -333,7 +331,7 @@ const showCloud = ref(false)
 .reply {
   display: flex;
   gap: 8px;
-  background: #f7f9fb;
+  background: var(--ch-fill);
   border-radius: 6px;
   padding: 8px 10px;
   margin-top: 8px;

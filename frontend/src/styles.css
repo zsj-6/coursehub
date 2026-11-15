@@ -1,20 +1,108 @@
+/*
+ * CourseHub 全局样式
+ * 设计原则：中性灰白底 + 细边框，不用渐变和大阴影；青绿色只用在主操作和关键数字上。
+ */
 :root {
-  --ch-primary: #3bb4b8;
-  --ch-bg: #f4f6f8;
-  --ch-card: #ffffff;
-  --ch-border: #e6e9ed;
-  --ch-text: #2c3e50;
-  --ch-text-2: #6b7785;
-  --ch-header-h: 56px;
+  /* 品牌色 */
+  --ch-primary: #12969c;
+  --ch-primary-text: #0c7c82; /* 用在文字和链接上，对比度更高 */
+  --ch-primary-bg: #e7f5f5;
 
-  /* Element Plus 主色改成青绿色 */
-  --el-color-primary: #3bb4b8;
-  --el-color-primary-light-3: #76cbce;
-  --el-color-primary-light-5: #9dd9db;
-  --el-color-primary-light-7: #c4e8e9;
-  --el-color-primary-light-8: #d8f0f1;
-  --el-color-primary-light-9: #ebf7f8;
-  --el-color-primary-dark-2: #2f9093;
+  /* 中性色 */
+  --ch-bg: #f5f6f7;
+  --ch-card: #ffffff;
+  --ch-fill: #f5f6f7;
+  --ch-fill-hover: #f2f3f5;
+  --ch-border: #e3e5e8;
+  --ch-border-light: #eef0f2;
+  --ch-text: #1f2329;
+  --ch-text-2: #646a73;
+  --ch-text-3: #8f959e;
+
+  /* 语义色 */
+  --ch-success: #2ba471;
+  --ch-warning: #e37318;
+  --ch-danger: #d54941;
+  --ch-blue: #4c7df0;
+  --ch-purple: #7b67d6;
+
+  --ch-radius: 8px;
+  --ch-header-h: 56px;
+  /* 页面内容区：宽屏下最多 1600px，两侧留白随屏幕收窄 */
+  --ch-page-max: 1600px;
+  --ch-gutter: clamp(16px, 2.5vw, 40px);
+
+  /* Element Plus 主题 */
+  --el-color-primary: #12969c;
+  --el-color-primary-light-3: #59b6ba;
+  --el-color-primary-light-5: #89cbce;
+  --el-color-primary-light-7: #b8e0e1;
+  --el-color-primary-light-8: #d0eaeb;
+  --el-color-primary-light-9: #e7f5f5;
+  --el-color-primary-dark-2: #0e787d;
+
+  --el-color-success: #2ba471;
+  --el-color-success-light-3: #6bbf9c;
+  --el-color-success-light-5: #95d2b8;
+  --el-color-success-light-7: #bfe4d4;
+  --el-color-success-light-8: #d5ede3;
+  --el-color-success-light-9: #eaf6f1;
+  --el-color-success-dark-2: #22835a;
+
+  --el-color-warning: #e37318;
+  --el-color-warning-light-3: #eb9d5d;
+  --el-color-warning-light-5: #f1b98c;
+  --el-color-warning-light-7: #f7d5ba;
+  --el-color-warning-light-8: #f9e3d1;
+  --el-color-warning-light-9: #fcf1e8;
+  --el-color-warning-dark-2: #b65c13;
+
+  --el-color-danger: #d54941;
+  --el-color-danger-light-3: #e2807a;
+  --el-color-danger-light-5: #eaa4a0;
+  --el-color-danger-light-7: #f2c8c6;
+  --el-color-danger-light-8: #f7dbd9;
+  --el-color-danger-light-9: #fbedec;
+  --el-color-danger-dark-2: #aa3a34;
+  --el-color-error: #d54941;
+  --el-color-error-light-3: #e2807a;
+  --el-color-error-light-5: #eaa4a0;
+  --el-color-error-light-7: #f2c8c6;
+  --el-color-error-light-8: #f7dbd9;
+  --el-color-error-light-9: #fbedec;
+  --el-color-error-dark-2: #aa3a34;
+
+  --el-color-info: #8a919b;
+  --el-color-info-light-3: #adb2b9;
+  --el-color-info-light-5: #c5c9ce;
+  --el-color-info-light-7: #dcdfe3;
+  --el-color-info-light-8: #e9ebed;
+  --el-color-info-light-9: #f3f4f5;
+  --el-color-info-dark-2: #646a73;
+
+  --el-text-color-primary: #1f2329;
+  --el-text-color-regular: #41464f;
+  --el-text-color-secondary: #8f959e;
+  --el-text-color-placeholder: #b0b5bd;
+  --el-text-color-disabled: #bbbfc4;
+
+  --el-border-color: #d9dce1;
+  --el-border-color-light: #e3e5e8;
+  --el-border-color-lighter: #eef0f2;
+  --el-border-color-extra-light: #f2f3f5;
+  --el-border-color-hover: #b0b5bd;
+
+  --el-fill-color: #eff0f2;
+  --el-fill-color-light: #f5f6f7;
+  --el-fill-color-lighter: #fafafb;
+  --el-bg-color-page: #f5f6f7;
+
+  --el-border-radius-base: 6px;
+  --el-border-radius-small: 4px;
+  --el-box-shadow: 0 12px 32px rgba(31, 35, 41, 0.12);
+  --el-box-shadow-light: 0 6px 20px rgba(31, 35, 41, 0.08);
+  --el-box-shadow-lighter: 0 2px 8px rgba(31, 35, 41, 0.06);
+  --el-font-family: inherit;
 }
 
 * {
@@ -31,20 +119,34 @@ body,
 body {
   background: var(--ch-bg);
   color: var(--ch-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans',
+    'Noto Sans SC', 'Noto Sans CJK SC', 'Source Han Sans SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
 }
 
 a {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
   text-decoration: none;
 }
 
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ch-text);
+  font-weight: 600;
+}
+
+/* ---------- 通用块 ---------- */
 .card {
   background: var(--ch-card);
   border: 1px solid var(--ch-border);
-  border-radius: 8px;
-  padding: 16px 20px;
+  border-radius: var(--ch-radius);
+  padding: 20px;
 }
 
 .page-title {
@@ -53,8 +155,27 @@ a {
   justify-content: space-between;
   gap: 12px;
   margin: 0 0 16px;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
+  line-height: 32px;
+  letter-spacing: -0.01em;
+}
+
+/* 页面容器：顶栏、二级导航、正文共用，保证左右边缘对齐 */
+.page-container {
+  width: 100%;
+  max-width: calc(var(--ch-page-max) + var(--ch-gutter) * 2);
+  margin: 0 auto;
+  padding-left: var(--ch-gutter);
+  padding-right: var(--ch-gutter);
+}
+
+/* 卡片内的小标题 */
+.card-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
 }
 
 .muted {
@@ -73,13 +194,215 @@ a {
 }
 
 .empty-tip {
-  color: var(--ch-text-2);
+  color: var(--ch-text-3);
   text-align: center;
-  padding: 32px 0;
+  padding: 36px 0;
+  font-size: 13px;
 }
 
 .rich-text {
   white-space: pre-wrap;
   line-height: 1.7;
   word-break: break-word;
+}
+
+/* 浅色调色块：配合 utils/format.ts 的 toneVars()，用于封面、头像、图标底 */
+.tone {
+  background-color: var(--tone-bg, var(--ch-primary-bg));
+  color: var(--tone, var(--ch-primary-text));
+}
+
+/* ---------- 数据条：一行关键数字，用细线分隔 ---------- */
+.stat-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--ch-card);
+  border: 1px solid var(--ch-border);
+  border-radius: var(--ch-radius);
+  margin-bottom: 16px;
+}
+.stat-strip > .stat {
+  padding: 16px 20px 18px;
+  min-width: 0;
+  color: inherit;
+}
+.stat-strip > .stat + .stat {
+  border-left: 1px solid var(--ch-border-light);
+}
+.stat-label {
+  font-size: 13px;
+  color: var(--ch-text-2);
+}
+.stat-value {
+  margin-top: 6px;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 34px;
+  letter-spacing: -0.02em;
+  color: var(--ch-text);
+}
+.stat-value small {
+  margin-left: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ch-text-3);
+}
+.stat-note {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ch-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 需要处理的数字才上色，其余保持中性 */
+.stat-strip > .stat.is-key .stat-value {
+  color: var(--ch-primary-text);
+}
+.stat-strip > .stat.is-warn .stat-value {
+  color: var(--ch-warning);
+}
+.stat-strip > a.stat:hover {
+  background: var(--ch-fill-hover);
+}
+.stat-strip > a.stat:first-child {
+  border-radius: var(--ch-radius) 0 0 var(--ch-radius);
+}
+.stat-strip > a.stat:last-child {
+  border-radius: 0 var(--ch-radius) var(--ch-radius) 0;
+}
+@media (max-width: 760px) {
+  .stat-strip {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat-strip > .stat + .stat {
+    border-left: none;
+  }
+  .stat-strip > .stat:nth-child(even) {
+    border-left: 1px solid var(--ch-border-light);
+  }
+  .stat-strip > .stat:nth-child(n + 3) {
+    border-top: 1px solid var(--ch-border-light);
+  }
+}
+
+/* ---------- Element Plus 细节调整 ---------- */
+.el-button {
+  font-weight: 500;
+}
+.el-button.is-link.el-button--primary,
+.el-button.is-text.el-button--primary {
+  --el-button-text-color: var(--ch-primary-text);
+}
+
+.el-tag {
+  --el-tag-border-radius: 4px;
+  font-weight: 500;
+}
+.el-tag.el-tag--light {
+  border-color: transparent;
+}
+.el-tag.el-tag--primary:not(.el-tag--dark) {
+  --el-tag-text-color: var(--el-color-primary-dark-2);
+}
+.el-tag.el-tag--success:not(.el-tag--dark) {
+  --el-tag-text-color: var(--el-color-success-dark-2);
+}
+.el-tag.el-tag--warning:not(.el-tag--dark) {
+  --el-tag-text-color: var(--el-color-warning-dark-2);
+}
+.el-tag.el-tag--danger:not(.el-tag--dark) {
+  --el-tag-text-color: var(--el-color-danger-dark-2);
+}
+.el-tag.el-tag--info:not(.el-tag--dark) {
+  --el-tag-text-color: var(--ch-text-2);
+}
+
+.el-table {
+  --el-table-header-bg-color: #fafafb;
+  --el-table-header-text-color: var(--ch-text-2);
+  --el-table-text-color: var(--ch-text);
+  --el-table-row-hover-bg-color: #f7f8f9;
+  --el-table-border-color: var(--ch-border-light);
+}
+.el-table th.el-table__cell {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.el-tabs__item {
+  color: var(--ch-text-2);
+  font-size: 14px;
+}
+.el-tabs__item.is-active {
+  color: var(--ch-text);
+  font-weight: 600;
+}
+.el-tabs__item:hover {
+  color: var(--ch-text);
+}
+.el-tabs__nav-wrap::after {
+  height: 1px;
+  background-color: var(--ch-border-light);
+}
+
+.el-dialog {
+  --el-dialog-border-radius: 10px;
+  --el-dialog-padding-primary: 20px;
+}
+.el-dialog__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.el-form-item__label {
+  color: var(--ch-text-2);
+}
+
+.el-menu {
+  --el-menu-item-height: 40px;
+  --el-menu-text-color: var(--ch-text-2);
+  --el-menu-hover-bg-color: var(--ch-fill-hover);
+  --el-menu-active-color: var(--ch-primary-text);
+}
+
+.el-progress-bar__outer {
+  background-color: var(--el-fill-color);
+}
+
+.el-avatar {
+  --el-avatar-bg-color: var(--ch-primary-bg);
+  --el-avatar-text-color: var(--ch-primary-text);
+  font-weight: 600;
+}
+
+.el-dropdown-menu__item {
+  color: var(--ch-text);
+}
+
+/* 分段切换：灰底轨道 + 白色滑块，比实心色块安静 */
+.el-radio-group:has(> .el-radio-button) {
+  padding: 2px;
+  border-radius: 6px;
+  background: var(--el-fill-color);
+}
+.el-radio-button .el-radio-button__inner {
+  border: none !important;
+  border-radius: 4px !important;
+  background: transparent;
+  color: var(--ch-text-2);
+  font-weight: 500;
+  box-shadow: none !important;
+}
+.el-radio-button.is-active .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner,
+.el-radio-button .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background: #fff;
+  color: var(--ch-text);
+  box-shadow: 0 1px 2px rgba(31, 35, 41, 0.12) !important;
+}
+.el-radio-button:not(.is-active) .el-radio-button__inner:hover {
+  color: var(--ch-text);
 }

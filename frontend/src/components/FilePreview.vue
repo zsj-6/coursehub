@@ -81,7 +81,7 @@ const pdfSrc = computed(() => (current.value ? `${current.value.url}${props.allo
 .file.active,
 .file:hover {
   background: var(--el-color-primary-light-9);
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .fname {
   overflow: hidden;

@@ -78,15 +78,16 @@ async function join() {
 
     <div v-loading="loading" class="grid">
       <router-link v-for="c in courses" :key="c.id" :to="`/courses/${c.id}`" class="course-card">
-        <div class="cover" :style="coverStyle(c.id, c.cover)">
-          <el-tag size="small" effect="dark" class="role">{{ ROLE_LABEL[c.my_role || 'student'] }}</el-tag>
+        <div class="cover tone" :style="coverStyle(c.id, c.cover)">
+          <span v-if="!c.cover" class="mono">{{ c.name.slice(0, 1) }}</span>
+          <span class="role">{{ ROLE_LABEL[c.my_role || 'student'] }}</span>
         </div>
         <div class="body">
-          <div class="name">{{ c.name }}</div>
+          <div class="name" :title="c.name">{{ c.name }}</div>
           <div class="muted">{{ c.owner?.name || '—' }} · {{ c.semester || '未设置学期' }}</div>
-          <div class="muted foot">
-            <span><el-icon><User /></el-icon> {{ c.student_count ?? 0 }} 名学生</span>
-            <span>访问码 {{ c.code }}</span>
+          <div class="foot">
+            <span><b>{{ c.student_count ?? 0 }}</b> 名学生</span>
+            <span class="code">{{ c.code }}</span>
           </div>
         </div>
       </router-link>
@@ -120,48 +121,77 @@ async function join() {
 <style scoped>
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
   min-height: 120px;
 }
 .course-card {
   background: #fff;
   border: 1px solid var(--ch-border);
-  border-radius: 8px;
+  border-radius: var(--ch-radius);
   overflow: hidden;
   color: inherit;
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .course-card:hover {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  border-color: var(--el-border-color-hover);
+  box-shadow: var(--el-box-shadow-lighter);
 }
 .cover {
-  height: 110px;
+  height: 88px;
   position: relative;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-end;
+}
+.mono {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
 }
 .role {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ch-text);
 }
 .body {
-  padding: 12px 14px;
+  padding: 14px 16px 12px;
 }
 .name {
   font-weight: 600;
   font-size: 15px;
-  margin-bottom: 4px;
+  line-height: 22px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .foot {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
-}
-.foot span {
-  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ch-border-light);
+  font-size: 13px;
+  color: var(--ch-text-2);
+}
+.foot b {
+  color: var(--ch-text);
+  font-weight: 600;
+}
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--ch-text-3);
 }
 @media (max-width: 640px) {
   .page-title {

@@ -307,7 +307,7 @@ async function doCopy() {
 .chapters {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   min-height: 120px;
 }
 .chapter {
@@ -318,7 +318,7 @@ async function doCopy() {
   align-items: center;
   justify-content: space-between;
   padding: 4px 12px 8px;
-  border-bottom: 1px solid var(--ch-border);
+  border-bottom: 1px solid var(--ch-border-light);
   margin-bottom: 4px;
 }
 .ch-title {
@@ -327,7 +327,7 @@ async function doCopy() {
 }
 .unit {
   margin: 6px 0 4px 16px;
-  border-left: 3px solid var(--el-color-primary-light-7);
+  border-left: 2px solid var(--ch-border);
   padding-left: 8px;
 }
 .unit-head {

@@ -51,18 +51,14 @@ async function reset() {
 <template>
   <AppHeader />
   <div class="pbl-bar">
-    <div class="inner">
-      <div class="brand">
-        <el-icon size="20"><Opportunity /></el-icon>
-        <b>项目训练</b>
-        <el-tag size="small" type="warning" effect="dark" round>原型</el-tag>
-      </div>
+    <div class="inner page-container">
       <nav class="tabs">
         <router-link v-for="t in tabs" :key="t.path" :to="t.path" :class="{ on: active === t.path }">
           <el-icon><component :is="t.icon" /></el-icon>{{ t.label }}
         </router-link>
       </nav>
       <div class="spacer" />
+      <span class="proto">原型演示</span>
       <el-dropdown trigger="click" @command="switchPersona">
         <span class="persona">
           <span class="muted">演示视角</span>
@@ -84,7 +80,7 @@ async function reset() {
       <el-tooltip content="重置演示数据"><el-button circle size="small" :icon="'RefreshLeft'" @click="reset" /></el-tooltip>
     </div>
   </div>
-  <main class="pbl-main">
+  <main class="pbl-main page-container">
     <router-view v-slot="{ Component }">
       <transition name="page" mode="out-in">
         <component :is="Component" :key="`${route.path}|${store.personaId}`" />
@@ -102,51 +98,69 @@ async function reset() {
   z-index: 9;
 }
 .inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 24px;
   height: 48px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ch-primary);
-}
-.brand b {
-  color: var(--ch-text);
-  font-size: 15px;
+.proto {
+  font-size: 12px;
+  color: var(--ch-text-3);
+  border: 1px solid var(--ch-border);
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 18px;
 }
 .tabs {
   display: flex;
   gap: 4px;
   height: 100%;
+  margin-left: -12px;
 }
 .tabs a {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   padding: 0 12px;
   color: var(--ch-text-2);
-  border-bottom: 2px solid transparent;
+}
+.tabs a:hover {
+  color: var(--ch-text);
 }
 .tabs a.on {
-  color: var(--ch-primary);
-  border-bottom-color: var(--ch-primary);
+  color: var(--ch-text);
   font-weight: 600;
+}
+.tabs a.on::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--ch-primary);
 }
 .persona {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  padding: 4px 10px;
-  border-radius: 16px;
-  background: #fff7ea;
-  border: 1px solid #f6d7a7;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--ch-border);
+  color: var(--ch-text);
+}
+.persona:hover {
+  border-color: var(--el-border-color-hover);
+}
+.persona b {
+  font-weight: 500;
+}
+.persona .el-icon {
+  color: var(--ch-text-3);
+  font-size: 12px;
 }
 .pi {
   display: flex;
@@ -154,37 +168,32 @@ async function reset() {
   line-height: 1.5;
   padding: 2px 0;
 }
+.pi b {
+  font-weight: 500;
+}
 .cur {
-  background: var(--el-color-primary-light-9);
+  background: var(--ch-primary-bg);
 }
 .pbl-main {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 20px 24px 40px;
+  padding-top: 24px;
+  padding-bottom: 48px;
 }
 .page-enter-active,
 .page-leave-active {
-  transition: all 0.18s;
+  transition: opacity 0.12s;
 }
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
+.page-enter-from,
 .page-leave-to {
   opacity: 0;
 }
 @media (max-width: 760px) {
   .inner {
-    padding: 0 16px;
     gap: 8px;
     overflow-x: auto;
   }
-  .brand .el-tag,
+  .proto,
   .persona .muted {
     display: none;
-  }
-  .pbl-main {
-    padding: 16px;
   }
 }
 </style>

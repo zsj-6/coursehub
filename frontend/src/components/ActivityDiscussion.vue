@@ -134,7 +134,7 @@ const isTeacher = (p: PostItem) => p.user_role !== 'student'
   display: flex;
   gap: 12px;
   padding: 12px 0;
-  border-top: 1px solid #f0f2f5;
+  border-top: 1px solid var(--ch-border-light);
 }
 .body {
   flex: 1;
@@ -158,15 +158,15 @@ const isTeacher = (p: PostItem) => p.user_role !== 'student'
 }
 .op:hover,
 .op.on {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .op.danger:hover {
-  color: #e8684a;
+  color: var(--ch-danger);
 }
 .reply {
   display: flex;
   gap: 8px;
-  background: #f7f9fb;
+  background: var(--ch-fill);
   border-radius: 6px;
   padding: 8px 10px;
   margin-top: 8px;

@@ -18,10 +18,10 @@ export const TYPE_LABEL: Record<ActivityType, string> = {
 }
 
 export const TYPE_COLOR: Record<ActivityType, string> = {
-  material: '#5b8ff9',
-  video: '#9270ca',
-  homework: '#3bb4b8',
-  exam: '#f6903d',
+  material: '#4c7df0',
+  video: '#7b67d6',
+  homework: '#12969c',
+  exam: '#e37318',
 }
 
 export const ROLE_LABEL: Record<MemberRole | 'admin', string> = {
@@ -73,17 +73,22 @@ export function publishState(a: ActivityBrief): { text: string; type: 'info' | '
   return { text: '已发布', type: 'success' }
 }
 
-/** 给课程卡片生成稳定的渐变色封面。 */
-export function coverStyle(id: number, cover?: string | null) {
-  if (cover) return { backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-  const palettes = [
-    ['#3bb4b8', '#2a8c99'],
-    ['#5b8ff9', '#3d6fd6'],
-    ['#9270ca', '#6f4fae'],
-    ['#f6903d', '#e06c1f'],
-    ['#5ad8a6', '#2fb07f'],
-    ['#e8684a', '#c94a2d'],
-  ]
-  const [a, b] = palettes[id % palettes.length]
-  return { backgroundImage: `linear-gradient(135deg, ${a}, ${b})` }
+/** 一组"深色文字 + 浅色底"的色调，用于封面、头像、图标底色。 */
+export const TONES: { fg: string; bg: string }[] = [
+  { fg: '#0c7c82', bg: '#e7f5f5' },
+  { fg: '#2b5fd9', bg: '#eaf0fe' },
+  { fg: '#6247c5', bg: '#efecfb' },
+  { fg: '#b65c13', bg: '#fcf1e8' },
+  { fg: '#22835a', bg: '#eaf6f1' },
+  { fg: '#aa3a34', bg: '#fbedec' },
+]
+export const toneVars = (i: number): Record<string, string> => {
+  const t = TONES[((i % TONES.length) + TONES.length) % TONES.length]
+  return { '--tone': t.fg, '--tone-bg': t.bg }
+}
+
+/** 课程封面：有封面图就用图，没有就按课程 id 取一个稳定的浅色调（由 CSS 读 --tone / --tone-bg）。 */
+export function coverStyle(id: number, cover?: string | null): Record<string, string> {
+  if (cover) return { ...toneVars(id), backgroundImage: `url(${cover})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+  return toneVars(id)
 }

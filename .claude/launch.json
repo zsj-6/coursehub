@@ -12,6 +12,12 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "export NVM_DIR=$HOME/.nvm; . $NVM_DIR/nvm.sh; cd frontend && npm run dev"],
       "port": 5173
+    },
+    {
+      "name": "production",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd backend && APP_ENV=production JWT_SECRET=$(python3 -c 'import secrets;print(secrets.token_hex(32))') $HOME/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8080"],
+      "port": 8080
     }
   ]
 }

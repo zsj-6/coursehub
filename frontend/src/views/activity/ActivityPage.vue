@@ -14,6 +14,7 @@ import { TYPE_LABEL, fmt, publishState } from '@/utils/format'
 import ExamPanel from './ExamPanel.vue'
 import HomeworkPanel from './HomeworkPanel.vue'
 import VideoPlayer from './VideoPlayer.vue'
+import BackBar from '@/components/BackBar.vue'
 
 const props = defineProps<{ activityId: number }>()
 const cs = useCourseStore()
@@ -58,10 +59,7 @@ async function unpublish() {
     <template #extra><el-button @click="$router.push(`/courses/${cs.course?.id}`)">返回课程内容</el-button></template>
   </el-result>
   <div v-else-if="act">
-    <el-breadcrumb separator="/" style="margin-bottom: 12px">
-      <el-breadcrumb-item :to="`/courses/${act.course_id}`">课程内容</el-breadcrumb-item>
-      <el-breadcrumb-item>{{ act.title }}</el-breadcrumb-item>
-    </el-breadcrumb>
+    <BackBar :items="[{ label: '课程内容', to: `/courses/${act.course_id}` }, { label: act.title }]" />
 
     <section class="card head">
       <ActivityIcon :type="act.type" :size="40" />

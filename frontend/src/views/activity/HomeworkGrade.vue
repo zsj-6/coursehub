@@ -253,7 +253,7 @@ async function save(goNext: boolean) {
   background: var(--el-color-primary-light-9);
 }
 .version.active {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .quick {
   display: flex;

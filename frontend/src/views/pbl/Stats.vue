@@ -26,7 +26,7 @@ const statusPie = computed(() =>
   })).filter((x) => x.value),
 )
 const levelPie = computed(() => {
-  const colors: Record<string, string> = { 本科: '#3bb4b8', 研究生: '#9270ca', 本研: '#5b8ff9' }
+  const colors: Record<string, string> = { 本科: '#12969c', 研究生: '#7b67d6', 本研: '#4c7df0' }
   return ['本科', '研究生', '本研']
     .map((l) => ({ label: l, value: scope.value.filter((p) => store.program(p.programId)?.level === l).length, color: colors[l] }))
     .filter((x) => x.value)
@@ -61,27 +61,27 @@ const rows = computed(() =>
   <div>
     <div class="page-title">
       <span>{{ store.isAdmin ? '学院项目统计' : '我指导的项目统计' }}</span>
-      <span class="muted">数据为原型演示数据</span>
+      <span class="muted">原型演示数据</span>
     </div>
-    <div class="ov">
-      <div><el-icon><Collection /></el-icon><b>{{ overview.programs }}</b><span>大项目</span></div>
-      <div><el-icon><Tickets /></el-icon><b>{{ overview.projects }}</b><span>课题</span></div>
-      <div><el-icon><OfficeBuilding /></el-icon><b>{{ overview.partners }}</b><span>合作方</span></div>
-      <div><el-icon><Avatar /></el-icon><b>{{ overview.mentors }}</b><span>参与教师</span></div>
-      <div><el-icon><User /></el-icon><b>{{ overview.students }}</b><span>参与学生</span></div>
-    </div>
+    <section class="stat-strip">
+      <div class="stat"><div class="stat-label">大项目</div><div class="stat-value">{{ overview.programs }}<small>个</small></div></div>
+      <div class="stat is-key"><div class="stat-label">课题</div><div class="stat-value">{{ overview.projects }}<small>个</small></div></div>
+      <div class="stat"><div class="stat-label">合作方</div><div class="stat-value">{{ overview.partners }}<small>家</small></div></div>
+      <div class="stat"><div class="stat-label">参与教师</div><div class="stat-value">{{ overview.mentors }}<small>人</small></div></div>
+      <div class="stat"><div class="stat-label">参与学生</div><div class="stat-value">{{ overview.students }}<small>人</small></div></div>
+    </section>
 
     <div class="charts">
-      <div class="card"><h4>按项目状态</h4><PieChart :items="statusPie" title="课题" /></div>
-      <div class="card"><h4>按本研</h4><PieChart :items="levelPie" title="课题" /></div>
-      <div class="card"><h4>各学院建设数量</h4>
-        <BarChart :rows="byCollege" :series="[{ name: '大项目', color: '#5b8ff9' }, { name: '课题', color: '#3bb4b8' }]" />
+      <div class="card"><h4 class="card-title">课题状态</h4><PieChart :items="statusPie" title="课题" /></div>
+      <div class="card"><h4 class="card-title">培养层次</h4><PieChart :items="levelPie" title="课题" /></div>
+      <div class="card"><h4 class="card-title">各学院建设数量</h4>
+        <BarChart :rows="byCollege" :series="[{ name: '大项目', color: '#4c7df0' }, { name: '课题', color: '#12969c' }]" />
       </div>
     </div>
 
     <div class="card">
-      <div class="flex" style="margin-bottom: 12px">
-        <h4 style="margin: 0">项目运行</h4>
+      <div class="flex" style="margin-bottom: 14px">
+        <h4 class="card-title" style="margin: 0">项目运行</h4>
         <div class="spacer" />
         <el-radio-group v-model="view" size="small">
           <el-radio-button value="gantt">进度甘特图</el-radio-button>
@@ -89,7 +89,7 @@ const rows = computed(() =>
         </el-radio-group>
       </div>
       <GanttChart v-if="view === 'gantt'" :projects="ganttProjects" />
-      <el-table v-else :data="rows" size="small">
+      <el-table v-else :data="rows">
         <el-table-column label="课题" min-width="180">
           <template #default="{ row }"><router-link :to="`/pbl/projects/${row.p.id}`">{{ row.p.title }}</router-link></template>
         </el-table-column>
@@ -109,55 +109,15 @@ const rows = computed(() =>
 </template>
 
 <style scoped>
-.ov {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.ov div {
-  background: #fff;
-  border: 1px solid var(--ch-border);
-  border-radius: 10px;
-  padding: 14px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 10px;
-  align-items: center;
-}
-.ov .el-icon {
-  grid-row: span 2;
-  font-size: 28px;
-  color: var(--ch-primary);
-  background: var(--el-color-primary-light-9);
-  border-radius: 10px;
-  padding: 8px;
-  width: 44px;
-  height: 44px;
-}
-.ov b {
-  font-size: 22px;
-}
-.ov span {
-  font-size: 12px;
-  color: var(--ch-text-2);
-}
 .charts {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.2fr;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-h4 {
-  margin: 0 0 12px;
+  grid-template-columns: 1fr 1fr 1.1fr;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 @media (max-width: 1000px) {
   .charts {
     grid-template-columns: 1fr;
-  }
-  .ov {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

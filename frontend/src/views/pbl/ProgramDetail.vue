@@ -5,6 +5,7 @@ import ProjectCard from '@/components/pbl/ProjectCard.vue'
 import ProjectFormDialog from '@/components/pbl/ProjectFormDialog.vue'
 import { usePblStore } from '@/stores/pbl'
 import { programCover } from '@/utils/pbl'
+import BackBar from '@/components/BackBar.vue'
 
 const props = defineProps<{ programId: string }>()
 const store = usePblStore()
@@ -24,29 +25,23 @@ const stats = computed(() => {
 
 <template>
   <div v-if="program">
-    <el-breadcrumb separator="/" class="crumb">
-      <el-breadcrumb-item :to="'/pbl'">项目大厅</el-breadcrumb-item>
-      <el-breadcrumb-item>{{ program.title }}</el-breadcrumb-item>
-    </el-breadcrumb>
-    <section class="head" :style="programCover(program.color)">
+    <BackBar :items="[{ label: '项目大厅', to: '/pbl' }, { label: program.title }]" />
+    <section class="head card" :style="programCover(program.color)">
+      <div class="mark tone">{{ program.title.slice(0, 1) }}</div>
       <div class="info">
-        <div class="flex">
-          <el-tag effect="light">{{ program.source }}</el-tag>
-          <el-tag effect="plain" class="light">{{ program.level }}</el-tag>
-        </div>
-        <h2>{{ program.title }}</h2>
+        <h1>{{ program.title }}</h1>
+        <div class="meta">{{ program.source }} · {{ program.level }} · {{ program.college }} · 合作方：{{ program.partner }}</div>
         <p>{{ program.description }}</p>
-        <div class="meta">关联学院：{{ program.college }}　·　合作方：{{ program.partner }}</div>
-      </div>
-      <div class="nums">
-        <div><b>{{ projects.length }}</b><span>课题</span></div>
-        <div><b>{{ stats.teams }}</b><span>团队</span></div>
-        <div><b>{{ stats.students }}</b><span>学生</span></div>
-        <div><b>{{ stats.mentors }}</b><span>指导教师</span></div>
       </div>
     </section>
+    <section class="stat-strip">
+      <div class="stat is-key"><div class="stat-label">课题</div><div class="stat-value">{{ projects.length }}<small>个</small></div></div>
+      <div class="stat"><div class="stat-label">团队</div><div class="stat-value">{{ stats.teams }}<small>支</small></div></div>
+      <div class="stat"><div class="stat-label">学生</div><div class="stat-value">{{ stats.students }}<small>人</small></div></div>
+      <div class="stat"><div class="stat-label">指导教师</div><div class="stat-value">{{ stats.mentors }}<small>人</small></div></div>
+    </section>
 
-    <div class="page-title">
+    <div class="page-title sub">
       <span>拆解出的课题</span>
       <el-button v-if="!store.isStudent" type="primary" :icon="'Plus'" @click="formRef?.open(undefined, programId)">拆解新课题</el-button>
     </div>
@@ -60,59 +55,49 @@ const stats = computed(() => {
 </template>
 
 <style scoped>
-.crumb {
-  margin-bottom: 14px;
-}
 .head {
-  color: #fff;
-  border-radius: 12px;
-  padding: 22px 26px;
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 20px;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 .info {
   flex: 1;
-  min-width: 280px;
+  min-width: 0;
 }
-.light {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.6);
-  background: transparent;
-}
-h2 {
-  margin: 10px 0 6px;
-}
-p {
-  margin: 0 0 8px;
-  line-height: 1.7;
-  opacity: 0.95;
+h1 {
+  margin: 0 0 2px;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
 }
 .meta {
   font-size: 13px;
-  opacity: 0.85;
+  color: var(--ch-text-2);
 }
-.nums {
-  display: flex;
-  gap: 24px;
+p {
+  margin: 10px 0 0;
+  line-height: 1.7;
+  color: var(--ch-text);
+  max-width: 820px;
 }
-.nums div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.nums b {
-  font-size: 26px;
-}
-.nums span {
-  font-size: 12px;
-  opacity: 0.85;
+.page-title.sub {
+  font-size: 16px;
+  margin: 28px 0 12px;
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
 }
 </style>

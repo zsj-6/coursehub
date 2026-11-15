@@ -301,7 +301,7 @@ async function start() {
 
 <style scoped>
 .card-lite {
-  background: #f7f9fb;
+  background: var(--ch-fill);
   border: 1px solid var(--ch-border);
   border-radius: 8px;
   padding: 12px 14px;
@@ -341,14 +341,13 @@ async function start() {
   border-radius: 8px;
   padding: 12px;
   background: #fff;
-  transition: box-shadow 0.2s;
+  transition: border-color 0.15s;
 }
 .team:hover {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border-color: var(--el-border-color-hover);
 }
 .team.mine {
   border-color: var(--ch-primary);
-  box-shadow: 0 0 0 1px var(--ch-primary);
 }
 .tname {
   font-size: 15px;
@@ -366,7 +365,7 @@ async function start() {
 .member.slot {
   border: 1px dashed var(--ch-border);
   border-radius: 6px;
-  color: #b8c0cc;
+  color: var(--el-color-info-light-5);
   font-size: 12px;
   justify-content: center;
 }
@@ -380,8 +379,8 @@ async function start() {
   flex-wrap: wrap;
   gap: 8px;
   padding: 10px;
-  background: #fffaf3;
-  border: 1px dashed #f6c38b;
+  background: var(--ch-fill);
+  border: 1px dashed var(--el-border-color);
   border-radius: 8px;
   margin-bottom: 12px;
 }

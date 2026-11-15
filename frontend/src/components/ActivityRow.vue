@@ -60,7 +60,7 @@ function timeInfo() {
   border-radius: 6px;
 }
 .row:hover {
-  background: #f7f9fa;
+  background: var(--ch-fill-hover);
 }
 .title {
   flex: 1;
@@ -71,7 +71,7 @@ function timeInfo() {
   white-space: nowrap;
 }
 .title:hover {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .type {
   color: var(--ch-text-2);

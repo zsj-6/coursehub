@@ -27,7 +27,8 @@ const rows = computed(() => {
   return list
 })
 const videos = computed(() => data.value?.activities.filter((a) => a.type === 'video') ?? [])
-const rateColor = (v: number) => (v >= 80 ? '#3bb4b8' : v >= 50 ? '#f6903d' : '#e8684a')
+const lowCount = computed(() => data.value?.rows.filter((r) => r.rate < 50).length ?? 0)
+const rateColor = (v: number) => (v >= 80 ? 'var(--ch-primary)' : v >= 50 ? 'var(--ch-warning)' : 'var(--ch-danger)')
 </script>
 
 <template>
@@ -37,24 +38,24 @@ const rateColor = (v: number) => (v >= 80 ? '#3bb4b8' : v >= 50 ? '#f6903d' : '#
       <span class="muted">完成规则按「课程设置 → 完成指标」动态计算</span>
     </div>
     <template v-if="data">
-      <div class="summary">
-        <div class="card stat"><b :style="{ color: rateColor(data.avg_rate) }">{{ data.avg_rate }}%</b><span class="muted">平均完成度</span></div>
-        <div class="card stat"><b>{{ data.rows.length }}</b><span class="muted">学生</span></div>
-        <div class="card stat"><b>{{ data.activities.length }}</b><span class="muted">已开放活动</span></div>
-        <div class="card stat"><b>{{ data.rows.filter((r) => r.rate < 50).length }}</b><span class="muted">完成度低于 50%</span></div>
+      <div class="stat-strip">
+        <div class="stat is-key"><div class="stat-label">平均完成度</div><div class="stat-value">{{ data.avg_rate }}<small>%</small></div></div>
+        <div class="stat"><div class="stat-label">学生</div><div class="stat-value">{{ data.rows.length }}<small>人</small></div></div>
+        <div class="stat"><div class="stat-label">已开放活动</div><div class="stat-value">{{ data.activities.length }}<small>个</small></div></div>
+        <div class="stat" :class="{ 'is-warn': lowCount }"><div class="stat-label">完成度低于 50%</div><div class="stat-value">{{ lowCount }}<small>人</small></div></div>
       </div>
 
       <section class="card">
-        <h4>各活动完成率</h4>
+        <h4 class="card-title">各活动完成率</h4>
         <div v-for="a in data.activities" :key="a.id" class="bar-row">
           <span class="bar-label"><ActivityIcon :type="a.type" :size="16" /> {{ a.title }}</span>
-          <el-progress :percentage="a.done_rate" :color="rateColor(a.done_rate)" :stroke-width="10" />
+          <el-progress :percentage="a.done_rate" :color="rateColor(a.done_rate)" :stroke-width="6" />
         </div>
       </section>
 
       <section class="card">
         <div class="flex" style="margin-bottom: 12px">
-          <h4 style="margin: 0">完成度明细（学生 × 活动）</h4>
+          <h4 class="card-title" style="margin: 0">完成度明细（学生 × 活动）</h4>
           <div class="spacer" />
           <el-input v-model="q" size="small" placeholder="姓名或学号" clearable style="width: 160px" />
           <el-select v-model="sortBy" size="small" style="width: 130px">
@@ -80,7 +81,7 @@ const rateColor = (v: number) => (v >= 80 ? '#3bb4b8' : v >= 50 ? '#f6903d' : '#
               <el-tooltip :content="`${TYPE_LABEL[a.type]}：${a.title}`"><span class="col-h">{{ a.title }}</span></el-tooltip>
             </template>
             <template #default="{ row }">
-              <el-icon v-if="row.done.includes(a.id)" color="#3bb4b8" size="18"><CircleCheckFilled /></el-icon>
+              <el-icon v-if="row.done.includes(a.id)" color="var(--ch-primary)" size="18"><CircleCheckFilled /></el-icon>
               <span v-else-if="a.type === 'video' && row.video_percent[a.id]" class="muted">{{ row.video_percent[a.id] }}%</span>
               <span v-else class="dash">—</span>
             </template>
@@ -105,26 +106,8 @@ const rateColor = (v: number) => (v >= 80 ? '#3bb4b8' : v >= 50 ? '#f6903d' : '#
 </template>
 
 <style scoped>
-.summary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-.stat b {
-  font-size: 24px;
-}
 section.card {
-  margin-bottom: 12px;
-}
-h4 {
-  margin: 0 0 12px;
+  margin-bottom: 16px;
 }
 .bar-row {
   display: grid;
@@ -150,12 +133,9 @@ h4 {
   vertical-align: middle;
 }
 .dash {
-  color: #c9d2dc;
+  color: var(--el-color-info-light-5);
 }
 @media (max-width: 760px) {
-  .summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .bar-row {
     grid-template-columns: 1fr;
   }

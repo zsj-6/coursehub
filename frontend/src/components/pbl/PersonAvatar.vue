@@ -15,7 +15,7 @@ const p = computed(() => store.person(props.id))
 <template>
   <span class="pa">
     <el-tooltip :content="p ? `${p.name}${p.major ? ' · ' + p.major : ''}${p.title ? ' · ' + p.title : ''}` : ''" :disabled="showName" placement="top">
-      <span class="av" :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${Math.round(size * 0.42)}px`, background: avatarColor(id) }">
+      <span class="av" :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${Math.round(size * 0.42)}px`, background: avatarColor(id).bg, color: avatarColor(id).fg }">
         {{ p?.name.slice(-2) }}
         <span v-if="leader" class="crown" title="组长">★</span>
       </span>
@@ -33,7 +33,6 @@ const p = computed(() => store.person(props.id))
 .av {
   position: relative;
   border-radius: 50%;
-  color: #fff;
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
@@ -43,7 +42,7 @@ const p = computed(() => store.person(props.id))
   position: absolute;
   top: -6px;
   right: -4px;
-  color: #f6b93b;
+  color: #e8a317;
   font-size: 12px;
   text-shadow: 0 0 2px #fff;
 }

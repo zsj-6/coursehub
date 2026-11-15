@@ -89,13 +89,15 @@ async function editCell(row: Row, activityId: number | null) {
       </div>
     </div>
 
-    <div v-if="table && cs.canGrade" class="stats">
-      <div class="card stat"><div class="muted">学生人数</div><b>{{ table.rows.length }}</b></div>
-      <div class="card stat"><div class="muted">平均总评</div><b>{{ stats?.avg ?? '—' }}</b></div>
-      <div class="card stat"><div class="muted">最高 / 最低</div><b>{{ stats ? `${fmtScore(stats.max)} / ${fmtScore(stats.min)}` : '—' }}</b></div>
-      <div class="card stat"><div class="muted">及格（≥60）</div><b>{{ stats?.pass ?? '—' }}</b></div>
-      <div class="card stat" :class="{ warn: table.ratio_sum !== 100 }">
-        <div class="muted">成绩占比合计（可分配 {{ Math.max(100 - table.ratio_sum, 0) }}%）</div><b>{{ table.ratio_sum }}%</b>
+    <div v-if="table && cs.canGrade" class="stat-strip">
+      <div class="stat"><div class="stat-label">学生人数</div><div class="stat-value">{{ table.rows.length }}<small>人</small></div></div>
+      <div class="stat is-key"><div class="stat-label">平均总评</div><div class="stat-value">{{ stats?.avg ?? '—' }}<small>分</small></div></div>
+      <div class="stat"><div class="stat-label">最高 / 最低</div><div class="stat-value">{{ stats ? `${fmtScore(stats.max)} / ${fmtScore(stats.min)}` : '—' }}</div></div>
+      <div class="stat"><div class="stat-label">及格（≥60）</div><div class="stat-value">{{ stats?.pass ?? '—' }}<small>人</small></div></div>
+      <div class="stat" :class="{ 'is-warn': table.ratio_sum !== 100 }">
+        <div class="stat-label">成绩占比合计</div>
+        <div class="stat-value">{{ table.ratio_sum }}<small>%</small></div>
+        <div class="stat-note">还可分配 {{ Math.max(100 - table.ratio_sum, 0) }}%</div>
       </div>
     </div>
 
@@ -178,20 +180,6 @@ async function editCell(row: Row, activityId: number | null) {
 </template>
 
 <style scoped>
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.stat b {
-  font-size: 20px;
-  display: block;
-  margin-top: 4px;
-}
-.stat.warn b {
-  color: var(--el-color-warning);
-}
 .th {
   line-height: 1.4;
   white-space: normal;
@@ -213,7 +201,7 @@ async function editCell(row: Row, activityId: number | null) {
 .ratio-sum {
   margin-top: 12px;
   font-weight: 600;
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
 }
 .ratio-sum.over {
   color: var(--el-color-danger);

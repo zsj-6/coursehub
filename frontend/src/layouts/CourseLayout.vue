@@ -53,18 +53,21 @@ const activeMenu = computed(() => {
       <template #extra><el-button type="primary" @click="$router.push('/courses')">返回我的课程</el-button></template>
     </el-result>
   </div>
-  <div v-else-if="store.course && store.course.id === courseId" class="course-wrap">
+  <div v-else-if="store.course && store.course.id === courseId" class="course-wrap page-container">
     <aside class="side">
-      <div class="cover" :style="coverStyle(store.course.id, store.course.cover)">
-        <div class="cover-name">{{ store.course.name }}</div>
-      </div>
-      <div class="meta">
-        <div class="muted">{{ store.course.semester || '未设置学期' }}</div>
-        <div class="flex" style="margin-top: 6px">
-          <el-tag size="small" effect="plain">{{ ROLE_LABEL[store.course.my_role || 'student'] }}</el-tag>
-          <span class="muted">访问码 <b class="code">{{ store.course.code }}</b></span>
+      <div class="course-head">
+        <div class="cover tone" :style="coverStyle(store.course.id, store.course.cover)">
+          <span v-if="!store.course.cover">{{ store.course.name.slice(0, 1) }}</span>
+        </div>
+        <div class="course-info">
+          <div class="course-name" :title="store.course.name">{{ store.course.name }}</div>
+          <div class="muted">{{ store.course.semester || '未设置学期' }}</div>
         </div>
       </div>
+      <dl class="meta">
+        <div><dt>我的身份</dt><dd>{{ ROLE_LABEL[store.course.my_role || 'student'] }}</dd></div>
+        <div><dt>访问码</dt><dd class="code">{{ store.course.code }}</dd></div>
+      </dl>
       <el-menu :default-active="activeMenu" router class="menu">
         <el-menu-item v-for="m in menu" :key="m.path" :index="m.path">
           <el-icon><component :is="m.icon" /></el-icon>
@@ -82,44 +85,85 @@ const activeMenu = computed(() => {
 <style scoped>
 .course-wrap {
   display: flex;
-  gap: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px 24px 40px;
+  gap: 24px;
+  padding-top: 24px;
+  padding-bottom: 48px;
   align-items: flex-start;
 }
 .side {
-  width: 220px;
+  width: 224px;
   flex-shrink: 0;
   background: #fff;
   border: 1px solid var(--ch-border);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: var(--ch-radius);
   position: sticky;
-  top: calc(var(--ch-header-h) + 20px);
+  top: calc(var(--ch-header-h) + 24px);
+}
+.course-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 16px 12px;
 }
 .cover {
-  height: 96px;
-  display: flex;
-  align-items: flex-end;
-  padding: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 600;
 }
-.cover-name {
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+.course-info {
+  min-width: 0;
+}
+.course-name {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 22px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .meta {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--ch-border);
+  margin: 0;
+  padding: 0 16px 14px;
+  display: grid;
+  gap: 4px;
+  border-bottom: 1px solid var(--ch-border-light);
+  font-size: 13px;
+}
+.meta div {
+  display: flex;
+  justify-content: space-between;
+}
+.meta dt {
+  color: var(--ch-text-3);
+}
+.meta dd {
+  margin: 0;
+  color: var(--ch-text);
 }
 .code {
-  color: var(--ch-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   letter-spacing: 1px;
+  font-weight: 600;
 }
 .menu {
   border-right: none;
+  padding: 8px;
+  background: transparent;
+}
+.menu :deep(.el-menu-item) {
+  border-radius: 6px;
+  margin-bottom: 2px;
+  padding: 0 12px !important;
+}
+.menu :deep(.el-menu-item.is-active) {
+  background: var(--ch-primary-bg);
+  font-weight: 600;
 }
 .content {
   flex: 1;
@@ -132,7 +176,8 @@ const activeMenu = computed(() => {
 @media (max-width: 900px) {
   .course-wrap {
     flex-direction: column;
-    padding: 16px;
+    gap: 16px;
+    padding-top: 16px;
   }
   .side {
     width: 100%;
@@ -141,6 +186,9 @@ const activeMenu = computed(() => {
   .menu {
     display: flex;
     overflow-x: auto;
+  }
+  .menu :deep(.el-menu-item) {
+    margin-bottom: 0;
   }
 }
 </style>

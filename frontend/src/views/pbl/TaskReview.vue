@@ -6,6 +6,7 @@ import PersonAvatar from '@/components/pbl/PersonAvatar.vue'
 import { usePblStore } from '@/stores/pbl'
 import { fmt, fromNow } from '@/utils/format'
 import { TASK_STATE } from '@/utils/pbl'
+import BackBar from '@/components/BackBar.vue'
 
 const props = defineProps<{ projectId: string; taskId: string }>()
 const store = usePblStore()
@@ -83,11 +84,7 @@ function urgeOne() {
 
 <template>
   <div v-if="project && task && manage">
-    <el-breadcrumb separator="/" class="crumb">
-      <el-breadcrumb-item :to="'/pbl'">项目大厅</el-breadcrumb-item>
-      <el-breadcrumb-item :to="`/pbl/projects/${projectId}?tab=tasks`">{{ project.title }}</el-breadcrumb-item>
-      <el-breadcrumb-item>评阅：{{ task.title }}</el-breadcrumb-item>
-    </el-breadcrumb>
+    <BackBar :items="[{ label: '项目大厅', to: '/pbl' }, { label: project.title, to: `/pbl/projects/${projectId}?tab=tasks` }, { label: `评阅：${task.title}` }]" />
     <div class="page-title">
       <span>{{ task.title }} <span class="muted">截止 {{ fmt(task.dueAt) }} · 满分 {{ task.fullScore }}</span></span>
       <el-button type="warning" plain :icon="'Bell'" @click="urgeMissing">一键催交（{{ counts.missing }}）</el-button>
@@ -168,9 +165,6 @@ function urgeOne() {
 </template>
 
 <style scoped>
-.crumb {
-  margin-bottom: 14px;
-}
 .review {
   display: grid;
   grid-template-columns: 260px 1fr 280px;
@@ -190,14 +184,14 @@ function urgeOne() {
   cursor: pointer;
 }
 .team-item:hover {
-  background: #f5f7fa;
+  background: var(--ch-fill);
 }
 .team-item.on {
   background: var(--el-color-primary-light-9);
 }
 .sc {
   font-weight: 700;
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
   width: 26px;
   text-align: right;
 }
@@ -217,7 +211,7 @@ function urgeOne() {
 .body {
   margin: 10px 0;
   padding: 12px;
-  background: #f7f9fb;
+  background: var(--ch-fill);
   border-radius: 8px;
   min-height: 80px;
 }

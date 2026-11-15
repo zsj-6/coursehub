@@ -89,7 +89,7 @@ async function remove() {
     <section class="card">
       <el-form label-width="90px" style="max-width: 560px">
         <el-form-item label="封面">
-          <div class="cover" :style="coverStyle(c.id, form.cover)" />
+          <div class="cover tone" :style="coverStyle(c.id, form.cover)" />
           <input ref="coverInput" type="file" accept="image/*" hidden @change="onCover" />
           <div class="flex" style="margin-left: 12px">
             <el-button size="small" @click="coverInput?.click()">上传封面</el-button>

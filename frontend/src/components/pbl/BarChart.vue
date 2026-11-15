@@ -29,26 +29,30 @@ const max = computed(() => Math.max(1, ...props.rows.flatMap((r) => r.values)))
 .legend {
   display: flex;
   gap: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-size: 12px;
   color: var(--ch-text-2);
 }
 .legend i {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 .row {
   display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 10px;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 10px;
+  padding: 8px 0;
+}
+.row + .row {
+  border-top: 1px solid var(--ch-border-light);
 }
 .label {
   font-size: 13px;
+  color: var(--ch-text-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -56,23 +60,18 @@ const max = computed(() => Math.max(1, ...props.rows.flatMap((r) => r.values)))
 .bar-line {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   height: 14px;
   margin: 2px 0;
 }
 .bar {
-  height: 12px;
-  border-radius: 0 6px 6px 0;
+  height: 8px;
+  border-radius: 2px;
   min-width: 2px;
-  animation: grow 0.8s ease-out;
-  transform-origin: left;
-}
-@keyframes grow {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
 }
 .v {
   font-size: 12px;
-  color: var(--ch-text-2);
+  font-weight: 600;
+  color: var(--ch-text);
 }
 </style>

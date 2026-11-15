@@ -1,5 +1,6 @@
 import type { ProjectStatus, ResourceKind, ShareScope } from '@/mock/pbl'
 import type { TaskState } from '@/stores/pbl'
+import { TONES, toneVars } from '@/utils/format'
 
 export const PROJECT_STATUS: Record<ProjectStatus, { text: string; type: 'info' | 'success' | 'warning' | 'primary' }> = {
   draft: { text: '草稿', type: 'info' },
@@ -9,10 +10,10 @@ export const PROJECT_STATUS: Record<ProjectStatus, { text: string; type: 'info' 
 }
 
 export const STATUS_COLOR: Record<ProjectStatus, string> = {
-  draft: '#b8c0cc',
-  recruiting: '#f6903d',
-  running: '#3bb4b8',
-  finished: '#5b8ff9',
+  draft: '#c5c9ce',
+  recruiting: '#e8862e',
+  running: '#12969c',
+  finished: '#4c7df0',
 }
 
 export const SCOPE_LABEL: Record<ShareScope, string> = {
@@ -22,12 +23,12 @@ export const SCOPE_LABEL: Record<ShareScope, string> = {
 }
 
 export const KIND_ICON: Record<ResourceKind, { icon: string; color: string }> = {
-  pdf: { icon: 'Document', color: '#e8684a' },
-  video: { icon: 'VideoPlay', color: '#9270ca' },
-  doc: { icon: 'Tickets', color: '#5b8ff9' },
-  ppt: { icon: 'DataBoard', color: '#f6903d' },
-  code: { icon: 'Files', color: '#2c3e50' },
-  image: { icon: 'Picture', color: '#5ad8a6' },
+  pdf: { icon: 'Document', color: '#d54941' },
+  video: { icon: 'VideoPlay', color: '#7b67d6' },
+  doc: { icon: 'Tickets', color: '#4c7df0' },
+  ppt: { icon: 'DataBoard', color: '#e37318' },
+  code: { icon: 'Files', color: '#41464f' },
+  image: { icon: 'Picture', color: '#2ba471' },
 }
 
 export const TASK_STATE: Record<TaskState, { text: string; type: 'info' | 'success' | 'warning' | 'danger' | 'primary' }> = {
@@ -48,21 +49,11 @@ export function kindOf(filename: string): ResourceKind {
   return 'doc'
 }
 
-const PROGRAM_PALETTES = [
-  ['#3bb4b8', '#22808a'],
-  ['#5b8ff9', '#3d6fd6'],
-  ['#9270ca', '#6a4aa8'],
-  ['#f6903d', '#d9691b'],
-  ['#5ad8a6', '#279c71'],
-]
-export const programCover = (i: number) => {
-  const [a, b] = PROGRAM_PALETTES[i % PROGRAM_PALETTES.length]
-  return { backgroundImage: `linear-gradient(135deg, ${a}, ${b})` }
-}
+/** 大项目的色调：返回 --tone / --tone-bg 两个 CSS 变量，具体怎么用由各页面的样式决定。 */
+export const programCover = (i: number) => toneVars(i)
 
-export const AVATAR_COLORS = ['#3bb4b8', '#5b8ff9', '#9270ca', '#f6903d', '#5ad8a6', '#e8684a', '#6dc8ec']
 export function avatarColor(id: string) {
   let h = 0
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  return AVATAR_COLORS[h % AVATAR_COLORS.length]
+  return TONES[h % TONES.length]
 }

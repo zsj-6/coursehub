@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ElMessage } from 'element-plus'
 import { computed } from 'vue'
 import type { Project } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
@@ -8,7 +9,10 @@ import PersonAvatar from './PersonAvatar.vue'
 const props = defineProps<{ project: Project }>()
 const store = usePblStore()
 const program = computed(() => store.program(props.project.programId))
-const interested = computed(() => props.project.interestedIds.includes(store.personaId))
+const fav = computed(() => store.isFavorite(props.project.id))
+function toggleFav() {
+  ElMessage.success(store.toggleFavorite(props.project.id) ? '已收藏，可在「我的收藏」里找到' : '已取消收藏')
+}
 const teams = computed(() => store.teamsOf(props.project.id))
 const current = computed(() => store.currentMilestone(props.project))
 const mine = computed(() => store.myTeam(props.project.id))
@@ -16,19 +20,21 @@ const mine = computed(() => store.myTeam(props.project.id))
 
 <template>
   <router-link :to="`/pbl/projects/${project.id}`" class="pc">
-    <div class="top" :style="programCover(program?.color ?? 0)">
-      <span class="prog">{{ program?.title }}</span>
-      <el-tag class="st" size="small" :type="PROJECT_STATUS[project.status].type" effect="dark">{{ PROJECT_STATUS[project.status].text }}</el-tag>
-      <span v-if="mine" class="mine-flag">我在 {{ mine.name }}</span>
-    </div>
-    <div class="body">
-      <div class="title">{{ project.title }}</div>
+    <div class="body" :style="programCover(program?.color ?? 0)">
+      <div class="top">
+        <span class="prog"><i />{{ program?.title }}</span>
+        <el-tag size="small" :type="PROJECT_STATUS[project.status].type">{{ PROJECT_STATUS[project.status].text }}</el-tag>
+        <button type="button" class="fav" :class="{ on: fav }" :title="fav ? '取消收藏' : '收藏'" @click.prevent.stop="toggleFav">
+          <el-icon><StarFilled v-if="fav" /><Star v-else /></el-icon>
+        </button>
+      </div>
+      <div class="title">{{ project.title }}<span v-if="mine" class="mine-flag">我在 {{ mine.name }}</span></div>
       <div class="summary">{{ project.summary }}</div>
       <div class="tags">
-        <el-tag v-for="t in project.tags" :key="t" size="small" effect="plain" round>{{ t }}</el-tag>
+        <span v-for="t in project.tags" :key="t" class="tag">{{ t }}</span>
       </div>
       <div v-if="project.status === 'running'" class="prog-line">
-        <el-progress :percentage="store.progressPercent(project)" :stroke-width="6" :show-text="false" />
+        <el-progress :percentage="store.progressPercent(project)" :stroke-width="4" :show-text="false" />
         <span class="muted">{{ current ? `当前：${current.title}` : '' }}</span>
       </div>
       <div class="foot">
@@ -37,10 +43,10 @@ const mine = computed(() => store.myTeam(props.project.id))
           <span class="muted">{{ project.mentorIds.map((m) => store.person(m)?.name).join('、') }}</span>
         </span>
         <div class="spacer" />
-        <span class="muted stat"><el-icon><View /></el-icon>{{ project.views }}</span>
-        <span class="muted stat"><el-icon><UserFilled /></el-icon>{{ teams.length }} 队</span>
-        <span class="heart" :class="{ on: interested }" :title="interested ? '取消感兴趣' : '标记感兴趣'" @click.prevent.stop="store.isStudent && store.toggleInterest(project)">
-          <el-icon><StarFilled v-if="interested" /><Star v-else /></el-icon>{{ project.interestedIds.length }}
+        <span class="nums">
+          <span><b>{{ teams.length }}</b> 队</span>
+          <span><b>{{ project.interestedIds.length }}</b> 人感兴趣</span>
+          <span><b>{{ project.views }}</b> 浏览</span>
         </span>
       </div>
     </div>
@@ -53,49 +59,83 @@ const mine = computed(() => store.myTeam(props.project.id))
   flex-direction: column;
   background: #fff;
   border: 1px solid var(--ch-border);
-  border-radius: 10px;
-  overflow: hidden;
+  border-radius: var(--ch-radius);
   color: var(--ch-text);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .pc:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
-}
-.top {
-  position: relative;
-  height: 56px;
-  padding: 10px 12px;
-  color: #fff;
-}
-.prog {
-  font-size: 12px;
-  opacity: 0.9;
-}
-.st {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-}
-.mine-flag {
-  position: absolute;
-  left: 12px;
-  bottom: 6px;
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
-  padding: 0 8px;
+  border-color: var(--el-border-color-hover);
+  box-shadow: var(--el-box-shadow-lighter);
 }
 .body {
-  padding: 12px 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   flex: 1;
 }
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.top .el-tag {
+  margin-left: auto;
+}
+.fav {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: -4px -6px -4px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ch-text-3);
+  font-size: 16px;
+  cursor: pointer;
+}
+.fav:hover {
+  background: var(--ch-fill-hover);
+  color: var(--ch-text);
+}
+.fav.on {
+  color: #e8a317;
+}
+.prog {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prog i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tone);
+  flex-shrink: 0;
+}
 .title {
   font-size: 16px;
   font-weight: 600;
+  line-height: 24px;
+}
+.mine-flag {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ch-primary-text);
+  background: var(--ch-primary-bg);
+  border-radius: 4px;
+  padding: 2px 6px;
+  vertical-align: 2px;
+  white-space: nowrap;
 }
 .summary {
   color: var(--ch-text-2);
@@ -110,19 +150,27 @@ const mine = computed(() => store.myTeam(props.project.id))
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
+}
+.tag {
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--ch-fill);
+  color: var(--ch-text-2);
 }
 .prog-line {
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
 .foot {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid #f0f2f5;
+  padding-top: 12px;
+  border-top: 1px solid var(--ch-border-light);
 }
 .mentors {
   display: flex;
@@ -135,20 +183,15 @@ const mine = computed(() => store.myTeam(props.project.id))
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+.nums {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--ch-text-3);
+  white-space: nowrap;
 }
-.heart {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+.nums b {
+  font-weight: 600;
   color: var(--ch-text-2);
-  font-size: 13px;
-  cursor: pointer;
-}
-.heart.on {
-  color: #f6b93b;
 }
 </style>

@@ -15,6 +15,7 @@ import type { ResourceKind, Task, Team } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
 import { fmt } from '@/utils/format'
 import { KIND_ICON, PROJECT_STATUS, TASK_STATE, programCover } from '@/utils/pbl'
+import BackBar from '@/components/BackBar.vue'
 
 const props = defineProps<{ projectId: string }>()
 const store = usePblStore()
@@ -27,6 +28,16 @@ const manage = computed(() => !!project.value && store.canManage(project.value))
 const teams = computed(() => store.teamsOf(props.projectId))
 const mine = computed(() => store.myTeam(props.projectId))
 const tasks = computed(() => store.tasksOf(props.projectId))
+const fav = computed(() => store.isFavorite(props.projectId))
+const interested = computed(() => !!project.value?.interestedIds.includes(store.personaId))
+const current = computed(() => (project.value ? store.currentMilestone(project.value) : undefined))
+const period = computed(() => {
+  const ms = project.value?.milestones ?? []
+  return ms.length ? `${fmt(ms[0].start, 'YYYY-MM-DD')} ~ ${fmt(ms[ms.length - 1].end, 'YYYY-MM-DD')}` : '未设置'
+})
+function toggleFav() {
+  ElMessage.success(store.toggleFavorite(props.projectId) ? '已收藏，可在「我指导的 / 我的项目 → 我的收藏」里找到' : '已取消收藏')
+}
 
 const tab = computed({
   get: () => (route.query.tab as string) || 'overview',
@@ -130,34 +141,33 @@ const overview = computed(() => ({
 
 <template>
   <div v-if="project && store.canSee(project)">
-    <el-breadcrumb separator="/" class="crumb">
-      <el-breadcrumb-item :to="'/pbl'">项目大厅</el-breadcrumb-item>
-      <el-breadcrumb-item :to="`/pbl/programs/${project.programId}`">{{ program?.title }}</el-breadcrumb-item>
-      <el-breadcrumb-item>{{ project.title }}</el-breadcrumb-item>
-    </el-breadcrumb>
+    <BackBar :items="[{ label: '项目大厅', to: '/pbl' }, { label: program?.title || '大项目', to: `/pbl/programs/${project.programId}` }, { label: project.title }]" />
 
     <section class="head card">
-      <div class="cover" :style="programCover(program?.color ?? 0)">{{ project.title.slice(0, 4) }}</div>
+      <div class="cover tone" :style="programCover(program?.color ?? 0)">{{ project.title.slice(0, 1) }}</div>
       <div class="info">
-        <div class="flex wrap">
+        <div class="title-row">
           <h2>{{ project.title }}</h2>
-          <el-tag :type="PROJECT_STATUS[project.status].type" effect="dark">{{ PROJECT_STATUS[project.status].text }}</el-tag>
-          <el-tag v-if="!project.published" type="info">未发布（学生不可见）</el-tag>
+          <el-tag :type="PROJECT_STATUS[project.status].type">{{ PROJECT_STATUS[project.status].text }}</el-tag>
+          <el-tag v-if="!project.published" type="info">未发布 · 学生不可见</el-tag>
         </div>
-        <div class="muted">{{ program?.title }} · {{ program?.source }} · {{ program?.partner }}</div>
-        <div class="flex wrap meta">
-          <span class="flex">指导教师
-            <PersonAvatar v-for="m in project.mentorIds" :id="m" :key="m" :size="24" show-name />
-          </span>
-          <el-tag v-for="t in project.tags" :key="t" size="small" effect="plain" round>{{ t }}</el-tag>
-          <span class="muted"><el-icon><View /></el-icon> {{ project.views }} 次浏览</span>
-          <span class="muted"><el-icon><Star /></el-icon> {{ project.interestedIds.length }} 人感兴趣</span>
+        <div class="sub">
+          <router-link :to="`/pbl/programs/${project.programId}`">{{ program?.title }}</router-link>
+          <span>{{ program?.source }}</span>
+          <span>{{ program?.partner }}</span>
+        </div>
+        <div class="tags">
+          <span v-for="t in project.tags" :key="t" class="tag">{{ t }}</span>
         </div>
       </div>
       <div class="ops">
+        <el-button :class="{ 'is-fav': fav }" @click="toggleFav">
+          <el-icon><StarFilled v-if="fav" /><Star v-else /></el-icon>
+          <span>{{ fav ? '已收藏' : '收藏' }}</span>
+        </el-button>
         <template v-if="store.isStudent">
-          <el-button :type="project.interestedIds.includes(store.personaId) ? 'warning' : 'default'" :icon="project.interestedIds.includes(store.personaId) ? 'StarFilled' : 'Star'" @click="store.toggleInterest(project)">
-            {{ project.interestedIds.includes(store.personaId) ? '已感兴趣' : '感兴趣' }}
+          <el-button :type="interested ? 'primary' : 'default'" :plain="interested" :icon="interested ? 'Check' : 'Pointer'" @click="store.toggleInterest(project)">
+            {{ interested ? '已感兴趣' : '感兴趣' }}
           </el-button>
           <el-button v-if="mine && project.status !== 'recruiting'" type="primary" :icon="'Right'" @click="router.push(`/pbl/projects/${project.id}/teams/${mine.id}`)">进入团队空间</el-button>
           <el-button v-else-if="!mine && project.status === 'recruiting'" type="primary" @click="tab = 'teaming'">报名 / 组队</el-button>
@@ -165,7 +175,7 @@ const overview = computed(() => ({
         <template v-if="manage">
           <el-button :icon="'Edit'" @click="formRef?.open(project)">编辑</el-button>
           <el-button :type="project.published ? 'default' : 'primary'" @click="togglePublish">{{ project.published ? '取消发布' : '发布' }}</el-button>
-          <el-button v-if="project.status === 'running'" type="success" plain @click="finish">结项</el-button>
+          <el-button v-if="project.status === 'running'" type="primary" @click="finish">结项</el-button>
         </template>
       </div>
     </section>
@@ -196,7 +206,16 @@ const overview = computed(() => ({
               </el-timeline-item>
             </el-timeline>
           </div>
-          <aside>
+          <aside class="side">
+            <h4>课题信息</h4>
+            <dl class="facts">
+              <div><dt>状态</dt><dd>{{ PROJECT_STATUS[project.status].text }}</dd></div>
+              <div><dt>周期</dt><dd>{{ period }}</dd></div>
+              <div><dt>关卡</dt><dd>{{ project.milestones.length }} 个<template v-if="current"> · 当前「{{ current.title }}」</template></dd></div>
+              <div><dt>团队</dt><dd>{{ teams.length }} 支</dd></div>
+              <div><dt>感兴趣</dt><dd>{{ project.interestedIds.length }} 人</dd></div>
+              <div><dt>浏览</dt><dd>{{ project.views }} 次</dd></div>
+            </dl>
             <h4>指导教师</h4>
             <div v-for="m in project.mentorIds" :key="m" class="mentor">
               <PersonAvatar :id="m" :size="40" />
@@ -208,7 +227,7 @@ const overview = computed(() => ({
             <h4>推荐内容 <span class="muted">（老师推荐的优秀提交）</span></h4>
             <div v-if="!recommended.length" class="muted">暂无</div>
             <div v-for="s in recommended" :key="s.id" class="rec">
-              <div class="flex"><el-icon color="#f6b93b"><Medal /></el-icon><b>{{ store.team(s.teamId)?.name }}</b> · {{ store.task(s.taskId)?.title }}</div>
+              <div class="flex"><el-icon color="#e8a317"><Medal /></el-icon><b>{{ store.team(s.teamId)?.name }}</b> · {{ store.task(s.taskId)?.title }}</div>
               <div class="muted">{{ s.content }}</div>
               <div class="files"><el-tag v-for="f in s.files" :key="f" size="small" effect="plain">{{ f }}</el-tag></div>
             </div>
@@ -309,7 +328,7 @@ const overview = computed(() => ({
         <div v-if="!showcased.length" class="muted">还没有展示的成果</div>
         <div class="showcases">
           <div v-for="t in showcased" :key="t.id" class="sc">
-            <div class="flex"><el-icon color="#f6b93b" size="20"><Trophy /></el-icon><b>{{ t.showcase!.title }}</b></div>
+            <div class="flex"><el-icon color="#e8a317" size="20"><Trophy /></el-icon><b>{{ t.showcase!.title }}</b></div>
             <div class="muted">{{ t.name }} · {{ fmt(t.showcase!.at, 'YYYY-MM-DD') }}</div>
             <p>{{ t.showcase!.summary }}</p>
             <ul><li v-for="h in t.showcase!.highlights" :key="h">{{ h }}</li></ul>
@@ -319,11 +338,11 @@ const overview = computed(() => ({
       </el-tab-pane>
 
       <el-tab-pane v-if="manage" label="统计" name="stats">
-        <div class="ov">
-          <div><b>{{ overview.teams }}</b><span>团队</span></div>
-          <div><b>{{ overview.resources }}</b><span>资源</span></div>
-          <div><b>{{ overview.tasks }}</b><span>任务</span></div>
-          <div><b>{{ overview.posts }}</b><span>讨论帖</span></div>
+        <div class="stat-strip">
+          <div class="stat is-key"><div class="stat-label">团队</div><div class="stat-value">{{ overview.teams }}<small>支</small></div></div>
+          <div class="stat"><div class="stat-label">资源</div><div class="stat-value">{{ overview.resources }}<small>份</small></div></div>
+          <div class="stat"><div class="stat-label">任务</div><div class="stat-value">{{ overview.tasks }}<small>个</small></div></div>
+          <div class="stat"><div class="stat-label">讨论帖</div><div class="stat-value">{{ overview.posts }}<small>条</small></div></div>
         </div>
         <div class="two">
           <div class="card">
@@ -382,27 +401,22 @@ const overview = computed(() => ({
 </template>
 
 <style scoped>
-.crumb {
-  margin-bottom: 14px;
-}
 .head {
   display: flex;
-  gap: 18px;
-  align-items: center;
+  gap: 16px;
+  align-items: flex-start;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .cover {
-  width: 84px;
-  height: 84px;
-  border-radius: 12px;
-  color: #fff;
-  font-weight: 700;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  font-weight: 600;
   display: grid;
   place-items: center;
-  font-size: 15px;
-  text-align: center;
-  padding: 8px;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 .info {
   flex: 1;
@@ -410,31 +424,100 @@ const overview = computed(() => ({
   display: grid;
   gap: 6px;
 }
-.info h2 {
-  margin: 0;
-  font-size: 20px;
-}
-.wrap {
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 }
-.meta {
-  gap: 12px;
+.info h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 30px;
+  letter-spacing: -0.01em;
+}
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ch-text-2);
+}
+.sub > * + *::before {
+  content: '·';
+  margin: 0 8px;
+  color: var(--ch-text-3);
+}
+.sub a {
+  color: var(--ch-text-2);
+}
+.sub a:hover {
+  color: var(--ch-primary-text);
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.tag {
+  font-size: 12px;
+  line-height: 22px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: var(--ch-fill);
+  color: var(--ch-text-2);
 }
 .ops {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
+.ops .el-button + .el-button {
+  margin-left: 0;
+}
+.ops .el-button .el-icon + span {
+  margin-left: 6px;
+}
+.is-fav {
+  color: #b7800f;
+  border-color: #f0d9a8;
+  background: #fdf8ec;
+}
+.side {
+  border-left: 1px solid var(--ch-border-light);
+  padding-left: 24px;
+}
+.side h4:first-child {
+  margin-top: 0;
+}
+.facts {
+  margin: 0 0 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.facts div {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+}
+.facts dt {
+  color: var(--ch-text-3);
+}
+.facts dd {
+  margin: 0;
+  color: var(--ch-text);
+}
 .track-card {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .tabs {
   padding-top: 4px;
 }
 .two {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 32px;
 }
 h4 {
   margin: 12px 0 8px;
@@ -456,10 +539,10 @@ h4 {
   margin-bottom: 12px;
 }
 .rec {
-  border: 1px solid #f6e3b5;
-  background: #fffcf3;
+  border: 1px solid var(--ch-border);
+  background: #fff;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
   margin-bottom: 8px;
   display: grid;
   gap: 4px;
@@ -475,7 +558,7 @@ h4 {
 .ms-title {
   font-weight: 600;
   padding: 6px 10px;
-  background: #f5f7fa;
+  background: var(--ch-fill);
   border-radius: 6px;
   margin-bottom: 6px;
 }
@@ -487,7 +570,7 @@ h4 {
   align-items: center;
   gap: 12px;
   padding: 10px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--ch-border-light);
   flex-wrap: wrap;
 }
 .tr-main {
@@ -506,7 +589,8 @@ h4 {
 }
 .score {
   font-size: 18px;
-  color: var(--ch-primary);
+  font-weight: 600;
+  color: var(--ch-primary-text);
   margin-right: 8px;
 }
 .showcases {
@@ -515,39 +599,21 @@ h4 {
   gap: 12px;
 }
 .sc {
-  border: 1px solid #f6e3b5;
-  background: linear-gradient(135deg, #fffcf3, #fff);
-  border-radius: 10px;
-  padding: 14px;
+  border: 1px solid var(--ch-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
 }
 .sc p {
   line-height: 1.7;
-}
-.ov {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.ov div {
-  background: var(--el-color-primary-light-9);
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.ov b {
-  font-size: 24px;
-  color: var(--ch-primary);
 }
 .metrics {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
-  background: #f7f9fb;
-  border-radius: 8px;
-  padding: 10px;
+  background: var(--ch-fill);
+  border-radius: 6px;
+  padding: 10px 12px;
   margin-bottom: 14px;
   font-size: 13px;
 }
@@ -555,8 +621,9 @@ h4 {
   .two {
     grid-template-columns: 1fr;
   }
-  .ov {
-    grid-template-columns: repeat(2, 1fr);
+  .side {
+    border-left: none;
+    padding-left: 0;
   }
 }
 </style>

@@ -77,146 +77,163 @@ function feedText(f: FeedItem) {
   }
 }
 
-const feedIcon: Record<FeedItem['kind'], { icon: string; color: string }> = {
-  opened: { icon: 'Bell', color: '#5b8ff9' },
-  graded: { icon: 'CircleCheck', color: '#3bb4b8' },
-  submissions: { icon: 'Upload', color: '#9270ca' },
-  missing: { icon: 'Warning', color: '#e8684a' },
+const FEED_COLOR: Record<FeedItem['kind'], string> = {
+  opened: 'var(--ch-blue)',
+  graded: 'var(--ch-primary)',
+  submissions: 'var(--ch-purple)',
+  missing: 'var(--ch-danger)',
 }
 
 const greeting = computed(() => {
   const h = new Date().getHours()
   return h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好'
 })
+const today = dayjs().format('M 月 D 日 dddd')
+const isStudent = computed(() => store.user?.role === 'student')
+
+/** 顶部一行关键数字：只有"需要你处理"的那一项上色。 */
+const stats = computed((): { label: string; value: number; unit: string; note: string; tone: string; to?: string }[] => {
+  const todos = data.value?.todos ?? []
+  const endOfToday = dayjs().endOf('day')
+  const week = dayjs().add(7, 'day').endOf('day')
+  const due = todos.filter((t) => t.kind === 'todo' && t.time)
+  const toGrade = todos.filter((t) => t.kind === 'to_grade')
+  const dueToday = due.filter((t) => dayjs(t.time).isBefore(endOfToday)).length
+  const first = isStudent.value
+    ? { label: '待完成', value: todos.filter((t) => t.kind === 'todo').length, unit: '项', note: '已开放、还没提交的作业和测试', tone: 'is-key' }
+    : {
+        label: '待批改',
+        value: toGrade.reduce((n, t) => n + (t.pending || 0), 0),
+        unit: '份',
+        note: toGrade.length ? `分布在 ${toGrade.length} 个作业和测试里` : '都批完了',
+        tone: 'is-key',
+      }
+  const s = data.value?.stats
+  return [
+    first,
+    { label: '今天截止', value: dueToday, unit: '项', note: dueToday ? '今天 24:00 前' : '今天没有截止的活动', tone: 'is-warn' },
+    { label: '未来七天截止', value: due.filter((t) => dayjs(t.time).isBefore(week)).length, unit: '项', note: `到 ${week.format('M 月 D 日')}`, tone: '' },
+    {
+      label: isStudent.value ? '在学课程' : '我的课程',
+      value: (s?.teaching_courses ?? 0) + (s?.learning_courses ?? 0),
+      unit: '门',
+      note: s?.teaching_courses && s?.learning_courses ? `教学 ${s.teaching_courses} 门，学习 ${s.learning_courses} 门` : '点击查看全部',
+      tone: '',
+      to: '/courses',
+    },
+  ]
+})
 </script>
 
 <template>
   <div v-loading="loading" class="dash">
-    <section class="card hello">
-      <el-avatar :size="56" :src="store.user?.avatar || undefined">{{ store.user?.name.slice(-2) }}</el-avatar>
+    <header class="hello">
       <div>
-        <div class="hello-title">{{ greeting }}，{{ store.user?.name }}</div>
-        <div v-if="data" class="muted">
-          <template v-if="data.stats.teaching_courses">正在 {{ data.stats.teaching_courses }} 门课程中进行教学</template>
-          <template v-if="data.stats.teaching_courses && data.stats.learning_courses">，</template>
-          <template v-if="data.stats.learning_courses">正在学习 {{ data.stats.learning_courses }} 门课程</template>
-          <template v-if="!data.stats.teaching_courses && !data.stats.learning_courses">还没有加入任何课程</template>
-          <router-link to="/courses" style="margin-left: 8px">查看课程 ›</router-link>
-        </div>
+        <h1>{{ greeting }}，{{ store.user?.name }}</h1>
+        <div class="muted">{{ today }} · {{ ROLE_LABEL[store.user?.role || 'student'] }}</div>
       </div>
-      <div class="spacer" />
-      <el-tag effect="plain" round>{{ ROLE_LABEL[store.user?.role || 'student'] }}</el-tag>
-    </section>
+      <el-button @click="$router.push('/courses')">进入我的课程</el-button>
+    </header>
 
-    <div v-if="data" class="cols">
-      <section class="card main-col">
-        <el-tabs v-model="tab">
-          <el-tab-pane :label="`待办 ${data.todos.length || ''}`" name="todo">
-            <div v-if="!todoGroups.length" class="empty-tip">没有待办事项</div>
-            <div v-for="g in todoGroups" :key="g.label" class="group">
-              <div class="group-label">{{ g.label }}</div>
-              <router-link v-for="t in g.items" :key="t.activity.id" :to="link(t)" class="item">
-                <span class="dot" :style="{ background: TYPE_COLOR[t.activity.type] }" />
-                <div class="item-body">
-                  <div class="item-title">
-                    <el-tag size="small" effect="plain">{{ TYPE_LABEL[t.activity.type] }}</el-tag>
-                    {{ t.activity.title }}
-                  </div>
-                  <div class="muted">
-                    {{ t.course.name }}
-                    <template v-if="t.kind === 'to_grade'"> · 待批改 {{ t.pending }} 人</template>
-                    <template v-else> · 截止 {{ fmt(t.time) }}（{{ fromNow(t.time) }}）</template>
-                  </div>
-                </div>
-                <el-icon><ArrowRight /></el-icon>
-              </router-link>
-            </div>
-          </el-tab-pane>
-          <el-tab-pane label="动态" name="feed">
-            <div v-if="!data.feed.length" class="empty-tip">近两周没有新动态</div>
-            <router-link v-for="(f, i) in data.feed" :key="i" :to="link(f)" class="item">
-              <el-icon :size="22" :color="feedIcon[f.kind].color"><component :is="feedIcon[f.kind].icon" /></el-icon>
-              <div class="item-body">
-                <div class="item-title">{{ f.course.name }} · {{ feedText(f) }}</div>
-                <div class="muted">「{{ f.activity.title }}」 · {{ fromNow(f.time) }}</div>
-              </div>
-            </router-link>
-          </el-tab-pane>
-        </el-tabs>
+    <template v-if="data">
+      <section class="stat-strip">
+        <component :is="s.to ? 'router-link' : 'div'" v-for="s in stats" :key="s.label" :to="s.to" class="stat" :class="s.value ? s.tone : ''">
+          <div class="stat-label">{{ s.label }}</div>
+          <div class="stat-value">{{ s.value }}<small>{{ s.unit }}</small></div>
+          <div class="stat-note">{{ s.note }}</div>
+        </component>
       </section>
 
-      <div class="side-stack">
-      <aside class="card side-col">
-        <div class="side-title"><el-icon><Bell /></el-icon> 最新公告</div>
-        <div v-if="!data.announcements?.length" class="empty-tip">暂无公告</div>
-        <router-link v-for="a in data.announcements" :key="a.id" :to="`/courses/${a.course.id}/announcements`" class="ann">
-          <div class="item-title ellipsis">
-            <el-tag v-if="a.pinned" size="small" type="danger" effect="plain">置顶</el-tag>
-            {{ a.title }}
-          </div>
-          <div class="muted ellipsis">{{ a.course.name }} · {{ fromNow(a.time) }}</div>
-        </router-link>
-      </aside>
-      <aside class="card side-col">
-        <div class="side-title"><el-icon><Clock /></el-icon> 最近访问</div>
-        <div v-if="!data.recent_courses.length" class="empty-tip">还没有访问过课程</div>
-        <router-link v-for="c in data.recent_courses" :key="c.id" :to="`/courses/${c.id}`" class="recent">
-          <div class="thumb" :style="coverStyle(c.id, c.cover)">{{ c.name.slice(0, 2) }}</div>
-          <div class="item-body">
-            <div class="item-title ellipsis">{{ c.name }}</div>
-            <div class="muted">{{ c.owner?.name }} · {{ c.semester }}</div>
-          </div>
-        </router-link>
-      </aside>
-      <router-link to="/pbl" class="card pbl-entry">
-        <el-icon size="26"><Opportunity /></el-icon>
-        <div>
-          <b>项目训练（原型）</b>
-          <div class="muted">组队完成真实项目，按关卡推进</div>
+      <div class="cols">
+        <section class="card main-col">
+          <el-tabs v-model="tab">
+            <el-tab-pane :label="data.todos.length ? `待办 ${data.todos.length}` : '待办'" name="todo">
+              <div v-if="!todoGroups.length" class="empty-tip">没有待办事项</div>
+              <div v-for="g in todoGroups" :key="g.label" class="group">
+                <div class="group-label">{{ g.label }}<span>{{ g.items.length }}</span></div>
+                <router-link v-for="t in g.items" :key="t.activity.id" :to="link(t)" class="item">
+                  <span class="type" :style="{ color: TYPE_COLOR[t.activity.type] }">{{ TYPE_LABEL[t.activity.type] }}</span>
+                  <div class="item-body">
+                    <div class="item-title ellipsis">{{ t.activity.title }}</div>
+                    <div class="muted ellipsis">{{ t.course.name }}</div>
+                  </div>
+                  <div v-if="t.kind === 'to_grade'" class="item-side">
+                    <b>{{ t.pending }}</b> 人待批改
+                  </div>
+                  <div v-else class="item-side" :class="{ urgent: g.label === '今天截止' }">
+                    <b>{{ fromNow(t.time) }}</b>截止
+                    <div class="muted">{{ fmt(t.time, 'MM-DD HH:mm') }}</div>
+                  </div>
+                  <el-icon class="arrow"><ArrowRight /></el-icon>
+                </router-link>
+              </div>
+            </el-tab-pane>
+            <el-tab-pane label="动态" name="feed">
+              <div v-if="!data.feed.length" class="empty-tip">近两周没有新动态</div>
+              <router-link v-for="(f, i) in data.feed" :key="i" :to="link(f)" class="item">
+                <span class="dot" :style="{ background: FEED_COLOR[f.kind] }" />
+                <div class="item-body">
+                  <div class="item-title ellipsis">{{ feedText(f) }}</div>
+                  <div class="muted ellipsis">{{ f.course.name }} ·「{{ f.activity.title }}」</div>
+                </div>
+                <div class="item-side muted">{{ fromNow(f.time) }}</div>
+              </router-link>
+            </el-tab-pane>
+          </el-tabs>
+        </section>
+
+        <div class="side-stack">
+          <aside class="card side-col">
+            <h3 class="card-title">最新公告</h3>
+            <div v-if="!data.announcements?.length" class="empty-tip">暂无公告</div>
+            <router-link v-for="a in data.announcements" :key="a.id" :to="`/courses/${a.course.id}/announcements`" class="line">
+              <div class="item-title">
+                <span class="ellipsis">{{ a.title }}</span>
+                <span v-if="a.pinned" class="pin">置顶</span>
+              </div>
+              <div class="muted ellipsis">{{ a.course.name }} · {{ fromNow(a.time) }}</div>
+            </router-link>
+          </aside>
+          <aside class="card side-col">
+            <h3 class="card-title">最近访问</h3>
+            <div v-if="!data.recent_courses.length" class="empty-tip">还没有访问过课程</div>
+            <router-link v-for="c in data.recent_courses" :key="c.id" :to="`/courses/${c.id}`" class="line recent">
+              <div class="thumb tone" :style="coverStyle(c.id, c.cover)">{{ c.cover ? '' : c.name.slice(0, 1) }}</div>
+              <div class="item-body">
+                <div class="item-title"><span class="ellipsis">{{ c.name }}</span></div>
+                <div class="muted ellipsis">{{ c.owner?.name }} · {{ c.semester || '未设置学期' }}</div>
+              </div>
+            </router-link>
+          </aside>
+          <router-link to="/pbl" class="card pbl-entry">
+            <div class="item-body">
+              <div class="item-title">项目训练<span class="proto">原型</span></div>
+              <div class="muted">组队完成真实项目，按关卡推进</div>
+            </div>
+            <el-icon class="arrow"><ArrowRight /></el-icon>
+          </router-link>
         </div>
-      </router-link>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.side-stack {
-  display: grid;
-  gap: 16px;
-}
-.ann {
-  display: block;
-  padding: 8px 4px;
-  border-bottom: 1px solid #f0f2f5;
-  color: inherit;
-}
-.ann:hover {
-  background: var(--el-color-primary-light-9);
-}
-.pbl-entry {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--ch-primary);
-  background: linear-gradient(120deg, #e9f7f7, #fff);
-}
-.pbl-entry b {
-  color: var(--ch-text);
-}
 .dash {
   min-height: 300px;
 }
 .hello {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
-.hello-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 4px;
+.hello h1 {
+  margin: 0 0 2px;
+  font-size: 22px;
+  line-height: 32px;
+  letter-spacing: -0.01em;
 }
 .cols {
   display: grid;
@@ -224,23 +241,58 @@ const greeting = computed(() => {
   gap: 16px;
   align-items: start;
 }
-.group {
-  margin-bottom: 12px;
+.main-col {
+  padding-top: 8px;
+}
+.side-stack {
+  display: grid;
+  gap: 16px;
+}
+.group + .group {
+  margin-top: 16px;
 }
 .group-label {
+  font-size: 13px;
   font-weight: 600;
-  margin: 8px 0;
+  color: var(--ch-text-2);
+  margin: 4px 0 4px;
+}
+.group-label span {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--ch-text-3);
 }
 .item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 14px;
+  padding: 12px 8px;
+  margin: 0 -8px;
   border-radius: 6px;
   color: inherit;
 }
+.item + .item {
+  box-shadow: 0 -1px 0 var(--ch-border-light);
+}
 .item:hover {
-  background: var(--el-color-primary-light-9);
+  background: var(--ch-fill-hover);
+  box-shadow: none;
+}
+.item:hover + .item {
+  box-shadow: none;
+}
+.type {
+  width: 56px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin: 0 4px;
 }
 .item-body {
   flex: 1;
@@ -250,37 +302,87 @@ const greeting = computed(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  font-weight: 500;
+  line-height: 22px;
 }
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.item-side {
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 13px;
+  color: var(--ch-text-2);
+  white-space: nowrap;
+}
+.item-side b {
+  font-weight: 600;
+  color: var(--ch-text);
+}
+.item-side.urgent b {
+  color: var(--ch-danger);
+}
+.arrow {
+  color: var(--ch-text-3);
   flex-shrink: 0;
 }
-.side-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  margin-bottom: 8px;
+.item .arrow {
+  opacity: 0;
+}
+.item:hover .arrow {
+  opacity: 1;
+}
+.line {
+  display: block;
+  padding: 10px 0;
+  color: inherit;
+  border-top: 1px solid var(--ch-border-light);
+}
+.card-title + .line {
+  border-top: none;
+  padding-top: 0;
+}
+.line:last-child {
+  padding-bottom: 0;
+}
+.line:hover .item-title {
+  color: var(--ch-primary-text);
+}
+.pin {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ch-danger);
 }
 .recent {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding: 8px 0;
-  color: inherit;
 }
 .thumb {
-  width: 64px;
-  height: 44px;
-  border-radius: 6px;
-  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   font-weight: 600;
   flex-shrink: 0;
+}
+.pbl-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  padding: 16px 20px;
+}
+.pbl-entry:hover {
+  border-color: var(--ch-primary);
+}
+.proto {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ch-text-3);
+  border: 1px solid var(--ch-border);
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 18px;
 }
 .ellipsis {
   overflow: hidden;
@@ -290,7 +392,12 @@ const greeting = computed(() => {
 }
 @media (max-width: 900px) {
   .cols {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .item-side .muted {
+    display: none;
   }
 }
 </style>

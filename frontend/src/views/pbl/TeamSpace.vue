@@ -10,6 +10,7 @@ import type { Task } from '@/mock/pbl'
 import { usePblStore } from '@/stores/pbl'
 import { fmt, fromNow } from '@/utils/format'
 import { TASK_STATE } from '@/utils/pbl'
+import BackBar from '@/components/BackBar.vue'
 
 const props = defineProps<{ projectId: string; teamId: string }>()
 const store = usePblStore()
@@ -62,11 +63,7 @@ async function setLeader(sid: string) {
 
 <template>
   <div v-if="allowed && project && team">
-    <el-breadcrumb separator="/" class="crumb">
-      <el-breadcrumb-item :to="'/pbl'">项目大厅</el-breadcrumb-item>
-      <el-breadcrumb-item :to="`/pbl/projects/${project.id}`">{{ project.title }}</el-breadcrumb-item>
-      <el-breadcrumb-item>{{ team.name }}</el-breadcrumb-item>
-    </el-breadcrumb>
+    <BackBar :items="[{ label: '项目大厅', to: '/pbl' }, { label: project.title, to: `/pbl/projects/${project.id}` }, { label: team.name }]" />
 
     <section class="head">
       <div class="badge">{{ team.name.slice(0, 2) }}</div>
@@ -194,30 +191,28 @@ async function setLeader(sid: string) {
 </template>
 
 <style scoped>
-.crumb {
-  margin-bottom: 14px;
-}
 .head {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   flex-wrap: wrap;
-  background: linear-gradient(120deg, #e9f7f7, #fff 60%);
+  background: #fff;
   border: 1px solid var(--ch-border);
-  border-radius: 12px;
-  padding: 18px 22px;
-  margin-bottom: 12px;
+  border-radius: var(--ch-radius);
+  padding: 20px;
+  margin-bottom: 16px;
 }
 .badge {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: var(--ch-primary);
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--ch-primary-bg);
+  color: var(--ch-primary-text);
+  font-size: 18px;
+  font-weight: 600;
   display: grid;
   place-items: center;
+  align-self: flex-start;
 }
 .info {
   flex: 1;
@@ -227,6 +222,9 @@ async function setLeader(sid: string) {
 }
 .info h2 {
   margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
 }
 .members {
   display: flex;
@@ -241,30 +239,30 @@ async function setLeader(sid: string) {
   gap: 4px;
 }
 .track {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .level {
   border: 1px solid var(--ch-border);
-  border-radius: 10px;
+  border-radius: var(--ch-radius);
   margin-bottom: 12px;
   overflow: hidden;
 }
 .level.current {
-  border-color: #f6c38b;
-  box-shadow: 0 0 0 1px #f6c38b;
+  border-color: var(--ch-primary);
 }
 .level.upcoming {
-  opacity: 0.65;
+  opacity: 0.7;
 }
 .level-head {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: #f7f9fb;
+  background: #fafafb;
+  border-bottom: 1px solid var(--ch-border-light);
 }
 .level.current .level-head {
-  background: #fff7ea;
+  background: var(--ch-primary-bg);
 }
 .lv-no {
   width: 24px;
@@ -275,17 +273,17 @@ async function setLeader(sid: string) {
   display: grid;
   place-items: center;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .level.upcoming .lv-no {
-  background: #b8c0cc;
+  background: var(--el-color-info-light-5);
 }
 .pad {
   padding: 10px 14px;
 }
 .task {
   padding: 10px 14px;
-  border-top: 1px solid #f0f2f5;
+  border-top: 1px solid var(--ch-border-light);
 }
 .task-top {
   display: flex;
@@ -301,14 +299,14 @@ async function setLeader(sid: string) {
   margin-top: 10px;
 }
 .req {
-  background: #f7f9fb;
+  background: var(--ch-fill);
   border-radius: 6px;
   padding: 8px 10px;
   margin-bottom: 10px;
   font-size: 13px;
 }
 .sub {
-  border-left: 3px solid var(--ch-primary);
+  border-left: 2px solid var(--ch-border);
   padding: 6px 10px;
   margin-bottom: 10px;
   display: grid;
@@ -320,13 +318,14 @@ async function setLeader(sid: string) {
   flex-wrap: wrap;
 }
 .comment {
-  background: #f0fafa;
+  background: var(--ch-primary-bg);
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 13px;
 }
 .score {
-  color: var(--ch-primary);
+  color: var(--ch-primary-text);
+  font-weight: 600;
   font-size: 18px;
 }
 .score small {
@@ -336,8 +335,8 @@ async function setLeader(sid: string) {
 .eval {
   margin-top: 16px;
   padding: 12px;
-  background: #fffcf3;
-  border: 1px solid #f6e3b5;
+  background: var(--ch-fill);
+  border: 1px solid var(--ch-border-light);
   border-radius: 8px;
 }
 </style>

@@ -4,7 +4,7 @@ import { computed } from 'vue'
 const props = defineProps<{ items: { label: string; value: number; color: string }[]; title?: string }>()
 const total = computed(() => props.items.reduce((s, x) => s + x.value, 0))
 const bg = computed(() => {
-  if (!total.value) return '#eef1f4'
+  if (!total.value) return 'var(--el-fill-color)'
   let acc = 0
   const stops = props.items.map((x) => {
     const from = (acc / total.value) * 360
@@ -21,16 +21,17 @@ const bg = computed(() => {
     <div class="pie" :style="{ background: bg }">
       <div class="hole">
         <b>{{ total }}</b>
-        <span class="muted">{{ title }}</span>
+        <span>{{ title }}</span>
       </div>
     </div>
     <ul class="legend">
       <li v-for="x in items" :key="x.label">
         <i :style="{ background: x.color }" />
-        <span>{{ x.label }}</span>
+        <span class="lb">{{ x.label }}</span>
         <b>{{ x.value }}</b>
-        <span class="muted">{{ total ? Math.round((x.value / total) * 100) : 0 }}%</span>
+        <span class="pct">{{ total ? Math.round((x.value / total) * 100) : 0 }}%</span>
       </li>
+      <li v-if="!items.length" class="none">暂无数据</li>
     </ul>
   </div>
 </template>
@@ -40,19 +41,14 @@ const bg = computed(() => {
   display: flex;
   align-items: center;
   gap: 24px;
-  flex-wrap: wrap;
 }
 .pie {
-  width: 140px;
-  height: 140px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  animation: spin-in 0.8s ease-out;
-}
-@keyframes spin-in {
-  from { transform: rotate(-90deg) scale(0.6); opacity: 0; }
-  to { transform: rotate(0) scale(1); opacity: 1; }
+  flex-shrink: 0;
 }
 .hole {
   width: 84px;
@@ -65,24 +61,50 @@ const bg = computed(() => {
   justify-content: center;
 }
 .hole b {
-  font-size: 22px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 28px;
+  letter-spacing: -0.02em;
+}
+.hole span {
+  font-size: 12px;
+  color: var(--ch-text-3);
 }
 .legend {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 .legend li {
   display: grid;
-  grid-template-columns: 10px 64px 28px 40px;
+  grid-template-columns: 8px 1fr auto 40px;
   align-items: center;
   gap: 8px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+.legend li + li {
+  border-top: 1px solid var(--ch-border-light);
 }
 .legend i {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
+}
+.lb {
+  color: var(--ch-text-2);
+}
+.legend b {
+  font-weight: 600;
+}
+.pct {
+  text-align: right;
+  color: var(--ch-text-3);
+}
+.none {
+  display: block !important;
+  color: var(--ch-text-3);
 }
 </style>

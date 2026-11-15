@@ -42,10 +42,10 @@ const store = usePblStore()
 }
 .line {
   position: absolute;
-  top: 17px;
+  top: 13px;
   right: 50%;
   width: 100%;
-  height: 3px;
+  height: 2px;
   background: var(--ch-border);
   z-index: 0;
 }
@@ -56,31 +56,26 @@ const store = usePblStore()
 .node {
   position: relative;
   z-index: 1;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-weight: 700;
-  background: #eef1f4;
-  color: #a3acb8;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 1px var(--ch-border);
+  font-size: 13px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--ch-text-3);
+  border: 1px solid var(--ch-border);
 }
 .stage.done .node {
   background: var(--ch-primary);
+  border-color: var(--ch-primary);
   color: #fff;
 }
 .stage.current .node {
-  background: #fff;
-  color: var(--ch-primary);
-  box-shadow: 0 0 0 2px var(--ch-primary);
-  animation: pulse 1.8s ease-out infinite;
-}
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 2px var(--ch-primary), 0 0 0 0 rgba(59, 180, 184, 0.5); }
-  70% { box-shadow: 0 0 0 2px var(--ch-primary), 0 0 0 12px rgba(59, 180, 184, 0); }
-  100% { box-shadow: 0 0 0 2px var(--ch-primary), 0 0 0 0 rgba(59, 180, 184, 0); }
+  color: var(--ch-primary-text);
+  border-color: var(--ch-primary);
+  box-shadow: 0 0 0 3px var(--ch-primary-bg);
 }
 .label {
   margin-top: 8px;
@@ -101,9 +96,10 @@ const store = usePblStore()
   display: inline-block;
   margin-top: 4px;
   font-size: 12px;
-  color: #fff;
-  background: var(--ch-primary);
-  border-radius: 10px;
-  padding: 0 8px;
+  font-weight: 500;
+  color: var(--ch-primary-text);
+  background: var(--ch-primary-bg);
+  border-radius: 4px;
+  padding: 0 6px;
 }
 </style>
